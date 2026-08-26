@@ -4,15 +4,20 @@ import {
     FileText, Stethoscope, Video, Heart, Clock, CheckCircle, AlertCircle,
     Phone, Mail, MapPin, Droplets, Shield, ArrowLeft, Volume2, Loader2,
     MicOff, KeyRound, MessageSquare, Activity, Plus, Star, LogOut,
-    Eye, EyeOff, Lock, Smartphone, ArrowRight, Sparkles, X as XIcon, UserPlus
+    Eye, EyeOff, Lock, Smartphone, ArrowRight, Sparkles, X as XIcon, UserPlus,
+    Trash2, ToggleLeft, ToggleRight, ClipboardList, Brain, Dumbbell, Moon,
+    Coffee, Cigarette, Wine, HeartPulse, Siren
 } from 'lucide-react';
 import {
     loginPatient, registerPatient, calculateAge, formatCPF, maskCPF,
-    type Patient, type PatientInsert
+    listMedications, addMedication, toggleMedication, deleteMedication,
+    getHealthProfile, upsertHealthProfile,
+    type Patient, type PatientInsert, type Medication, type MedicationInsert, type HealthProfile
 } from '../services/patientService';
+import { PrescricoesScreenLive, TriagemSaudeScreen } from './PatientScreens';
 
 // ── Types ────────────────────────────────────────────────────────────────────────
-type AppScreen = 'splash' | 'login' | 'register' | 'home' | 'consultas' | 'liz' | 'perfil' | 'prescricoes' | 'exames';
+type AppScreen = 'splash' | 'login' | 'register' | 'home' | 'consultas' | 'liz' | 'perfil' | 'prescricoes' | 'exames' | 'triagem';
 type LizOrbState = 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING';
 
 interface ConversationEntry {
@@ -164,6 +169,10 @@ export const PatientApp: React.FC = () => {
     // ── Proactive Analysis (Background LLM Check) ────────────────────────────
     const [lizProactiveAlert, setLizProactiveAlert] = useState<string | null>(null);
 
+    // ── Patient Data (Medications + Health Profile from Supabase) ─────────────
+    const [medications, setMedications] = useState<Medication[]>([]);
+    const [healthProfile, setHealthProfile] = useState<HealthProfile | null>(null);
+
     const recognitionRef = useRef<any>(null);
     const conversationEndRef = useRef<HTMLDivElement>(null);
 
@@ -232,6 +241,20 @@ export const PatientApp: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [screen]);
+
+    // ── Load Patient Data from Supabase ──────────────────────────────────────
+    useEffect(() => {
+        if (!loggedPatient) return;
+        const loadData = async () => {
+            const [meds, profile] = await Promise.all([
+                listMedications(loggedPatient.id),
+                getHealthProfile(loggedPatient.id),
+            ]);
+            setMedications(meds);
+            setHealthProfile(profile);
+        };
+        loadData();
+    }, [loggedPatient]);
 
     // ── Login / Logout ───────────────────────────────────────────────────────
     const handleLogin = (patient: Patient) => {
@@ -367,11 +390,22 @@ export const PatientApp: React.FC = () => {
                         <HomeScreen navigateTo={navigateTo} patient={patientDisplayData} unreadCount={unreadCount}
                             showNotifications={showNotifications} setShowNotifications={setShowNotifications}
                             notifications={notifications} markAllRead={markAllRead} onTalkToLiz={handleFabClick} orbState={orbState}
-                            lizProactiveAlert={lizProactiveAlert} onDismissAlert={() => setLizProactiveAlert(null)} />
+                            lizProactiveAlert={lizProactiveAlert} onDismissAlert={() => setLizProactiveAlert(null)}
+                            healthProfile={healthProfile} />
                     )}
                     {screen === 'consultas' && <ConsultasScreen navigateTo={navigateTo} />}
-                    {screen === 'prescricoes' && <PrescricoesScreen navigateTo={navigateTo} />}
+                    {screen === 'prescricoes' && (
+                        <PrescricoesScreenLive navigateTo={navigateTo}
+                            medications={medications} setMedications={setMedications}
+                            patientId={loggedPatient?.id || null} mockPrescriptions={PRESCRIPTIONS} />
+                    )}
                     {screen === 'exames' && <ExamesScreen navigateTo={navigateTo} />}
+                    {screen === 'triagem' && loggedPatient && (
+                        <TriagemSaudeScreen navigateTo={navigateTo}
+                            patientId={loggedPatient.id} patientName={patientDisplayData.name}
+                            apiKey={apiKey} healthProfile={healthProfile}
+                            setHealthProfile={setHealthProfile} />
+                    )}
                     {screen === 'liz' && (
                         <LizScreen orbState={orbState} transcript={transcript} lizResponse={lizResponse} conversation={conversation}
                             errorMessage={errorMessage} apiKey={apiKey} setApiKey={setApiKey} showKeyInput={showKeyInput}
@@ -800,7 +834,8 @@ const HomeScreen: React.FC<{
     notifications: typeof NOTIFICATIONS; markAllRead: () => void;
     onTalkToLiz: () => void; orbState: LizOrbState;
     lizProactiveAlert: string | null; onDismissAlert: () => void;
-}> = ({ navigateTo, patient, unreadCount, showNotifications, setShowNotifications, notifications, markAllRead, onTalkToLiz, orbState, lizProactiveAlert, onDismissAlert }) => (
+    healthProfile: HealthProfile | null;
+}> = ({ navigateTo, patient, unreadCount, showNotifications, setShowNotifications, notifications, markAllRead, onTalkToLiz, orbState, lizProactiveAlert, onDismissAlert, healthProfile }) => (
     <div className="bg-gradient-to-b from-[#1D3461] to-[#162749] min-h-full">
         <div className="px-5 pt-12 pb-8 text-white">
             <div className="flex items-center justify-between mb-6">
@@ -906,10 +941,39 @@ const HomeScreen: React.FC<{
                 ))}
             </div>
 
+            {/* Triage Card */}
+            <button onClick={() => navigateTo('triagem')}
+                className={`w-full p-4 rounded-2xl border transition-all active:scale-[0.98] mb-6 text-left ${
+                    healthProfile?.triage_completed
+                        ? 'bg-emerald-50 border-emerald-200'
+                        : 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 animate-pulse'
+                }`}>
+                <div className="flex items-center gap-3">
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                        healthProfile?.triage_completed ? 'bg-emerald-100' : 'bg-purple-100'
+                    }`}>
+                        {healthProfile?.triage_completed
+                            ? <CheckCircle className="w-5 h-5 text-emerald-600" />
+                            : <ClipboardList className="w-5 h-5 text-purple-600" />}
+                    </div>
+                    <div className="flex-1">
+                        <p className={`text-sm font-bold ${healthProfile?.triage_completed ? 'text-emerald-800' : 'text-purple-800'}`}>
+                            {healthProfile?.triage_completed ? '✅ Perfil de Saúde Completo' : '🩺 Triagem de Saúde'}
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                            {healthProfile?.triage_completed
+                                ? 'Toque para ver seu perfil completo'
+                                : 'Conte à LIZ sobre sua rotina e saúde'}
+                        </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                </div>
+            </button>
+
             <h2 className="text-sm font-bold text-slate-900 mb-3">Resumo de Saúde</h2>
             <div className="space-y-2.5">
                 {[
-                    { icon: Droplets, label: 'Tipo Sanguíneo', value: PATIENT.bloodType, iconBg: 'bg-red-50 border-red-100', iconColor: 'text-red-500' },
+                    { icon: Droplets, label: 'Tipo Sanguíneo', value: patient.bloodType, iconBg: 'bg-red-50 border-red-100', iconColor: 'text-red-500' },
                     { icon: Pill, label: 'Medicamentos Ativos', value: `${PRESCRIPTIONS.filter((p) => p.active).length} medicamentos`, iconBg: 'bg-emerald-50 border-emerald-100', iconColor: 'text-emerald-600' },
                     { icon: FlaskConical, label: 'Exames Pendentes', value: `${EXAMS.filter((e) => e.status === 'Pendente').length} pendentes`, iconBg: 'bg-amber-50 border-amber-100', iconColor: 'text-amber-600' },
                 ].map((item) => (

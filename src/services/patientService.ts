@@ -129,3 +129,117 @@ export function maskCPF(cpf: string): string {
     if (digits.length < 11) return cpf;
     return `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**`;
 }
+
+// ══════════════════════════════════════════════════════════════════════════════════
+//  MEDICATIONS
+// ══════════════════════════════════════════════════════════════════════════════════
+
+export interface Medication {
+    id: string;
+    patient_id: string;
+    medication_name: string;
+    dosage: string;
+    frequency: string;
+    prescribing_doctor: string | null;
+    start_date: string | null;
+    end_date: string | null;
+    notes: string | null;
+    active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export type MedicationInsert = Pick<Medication, 'patient_id' | 'medication_name' | 'dosage' | 'frequency'> & {
+    prescribing_doctor?: string | null;
+    notes?: string | null;
+};
+
+export async function listMedications(patientId: string): Promise<Medication[]> {
+    const { data, error } = await supabasePatients
+        .from('patient_medications')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('active', { ascending: false })
+        .order('created_at', { ascending: false });
+    if (error || !data) return [];
+    return data as Medication[];
+}
+
+export async function addMedication(med: MedicationInsert): Promise<{ data: Medication | null; error: string | null }> {
+    const { data, error } = await supabasePatients
+        .from('patient_medications')
+        .insert(med)
+        .select()
+        .single();
+    if (error) return { data: null, error: error.message };
+    return { data: data as Medication, error: null };
+}
+
+export async function toggleMedication(id: string, active: boolean): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_medications')
+        .update({ active })
+        .eq('id', id);
+    return !error;
+}
+
+export async function deleteMedication(id: string): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_medications')
+        .delete()
+        .eq('id', id);
+    return !error;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════
+//  HEALTH PROFILE (Triagem de Saúde LIZ)
+// ══════════════════════════════════════════════════════════════════════════════════
+
+export interface HealthProfile {
+    id: string;
+    patient_id: string;
+    daily_routine: string | null;
+    exercise_frequency: string | null;
+    diet_description: string | null;
+    sleep_hours: string | null;
+    smoking: string | null;
+    alcohol: string | null;
+    past_diseases: string[];
+    family_history: string[];
+    surgeries: string[];
+    hospitalizations: string | null;
+    stress_level: string | null;
+    mental_health_notes: string | null;
+    liz_health_summary: string | null;
+    liz_risk_factors: string[];
+    liz_recommendations: string[];
+    triage_completed: boolean;
+    triage_completed_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export async function getHealthProfile(patientId: string): Promise<HealthProfile | null> {
+    const { data, error } = await supabasePatients
+        .from('patient_health_profiles')
+        .select('*')
+        .eq('patient_id', patientId)
+        .limit(1)
+        .single();
+    if (error || !data) return null;
+    return data as HealthProfile;
+}
+
+export async function upsertHealthProfile(
+    patientId: string,
+    profile: Partial<Omit<HealthProfile, 'id' | 'patient_id' | 'created_at' | 'updated_at'>>
+): Promise<{ data: HealthProfile | null; error: string | null }> {
+    const { data, error } = await supabasePatients
+        .from('patient_health_profiles')
+        .upsert({ patient_id: patientId, ...profile }, { onConflict: 'patient_id' })
+        .select()
+        .single();
+    if (error) return { data: null, error: error.message };
+    return { data: data as HealthProfile, error: null };
+}
+
