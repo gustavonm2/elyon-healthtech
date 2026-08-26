@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+/* ── Default theme variables (Blue Clinical — overridden by ThemeContext) ── */
+:root {
+  --color-primary:         #1D3461;
+  --color-primary-hover:   #162749;
+  --color-primary-light:   #EEF4FA;
+  --color-primary-ring:    #A8C4DA;
+  --color-primary-text:    #162749;
+  --color-accent:          #2C4E6E;
+  --color-sidebar-bg:      #FFFFFF;
+  --color-sidebar-border:  #E2E8F0;
+  --color-sidebar-logo-bg: #1D3461;
+  --color-sidebar-text:    #475569;
+  --color-page-bg:         #F1F5F9;
+  --color-login-bg:        #F8FAFC;
+  --color-card-bg:         #FFFFFF;
+  --color-nav-active-bg:   #EEF4FA;
+  --color-nav-active-text: #1D3461;
+  --color-nav-icon:        #64748B;
+  --color-text-primary:    #0F172A;
+  --color-text-secondary:  #475569;
+  --color-text-muted:      #64748B;
+  --color-border:          #E2E8F0;
+  --color-border-light:    #F1F5F9;
+  --color-surface:         #F8FAFC;
+}
+
+@layer base {
+  body {
+    @apply antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--color-page-bg);
+    color: var(--color-text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Global System Utilities — all use CSS variables */
+@layer components {
+  .table-container {
+    @apply w-full text-left border-collapse;
+  }
+
+  .table-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .table-text {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+  }
+
+  .table-row-hover {
+    border-bottom: 1px solid var(--color-border-light);
+    transition: background-color 0.15s ease;
+  }
+  .table-row-hover:hover { background-color: var(--color-surface); }
+  .table-row-hover:last-child { border-bottom: none; }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+  }
+  .btn-primary:hover { background-color: var(--color-primary-hover); }
+  .btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-primary-ring);
+  }
+
+  .btn-secondary {
+    background-color: var(--color-card-bg);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    font-weight: 700;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+  }
+  .btn-secondary:hover { background-color: var(--color-surface); }
+}
