@@ -2,93 +2,77 @@ import React, { useState, useEffect } from 'react';
 import {
     MessageSquare, User, Clock, TrendingUp, Activity, Search,
     ArrowUpDown, ChevronRight, Mic, Volume2, Brain, BarChart3,
-    Sparkles, Filter, RefreshCw, Eye
+    Sparkles, Filter, RefreshCw, Eye, Loader2, AlertCircle
 } from 'lucide-react';
+import { getMonitorData, type MonitorPatientRow } from '../services/patientService';
 
-// ── Types ────────────────────────────────────────────────────────────────────────
-interface PatientInteraction {
-    id: string;
-    patientName: string;
-    patientInitials: string;
-    totalInteractions: number;
-    voiceInteractions: number;
-    textInteractions: number;
-    proactiveAlerts: number;
-    lastInteraction: string;
-    averageResponseTime: string;
-    satisfaction: number; // 1-5
-    status: 'active' | 'idle' | 'new';
-    topics: string[];
+// ── Time helpers ─────────────────────────────────────────────────────────────────
+function timeAgo(dateStr: string | null): string {
+    if (!dateStr) return '--';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Agora';
+    if (mins < 60) return `Há ${mins} min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `Há ${hours}h`;
+    const days = Math.floor(hours / 24);
+    return `Há ${days} dia${days > 1 ? 's' : ''}`;
 }
 
-// ── Mock Data (realistic patient interactions with LIZ) ──────────────────────────
-const MOCK_INTERACTIONS: PatientInteraction[] = [
-    {
-        id: 'p1', patientName: 'Carlos Eduardo Lima', patientInitials: 'CE',
-        totalInteractions: 47, voiceInteractions: 32, textInteractions: 15, proactiveAlerts: 8,
-        lastInteraction: 'Há 12 min', averageResponseTime: '1.2s', satisfaction: 5,
-        status: 'active', topics: ['Cardiologia', 'Medicações', 'Exames Pendentes'],
-    },
-    {
-        id: 'p2', patientName: 'Maria Fernanda Souza', patientInitials: 'MF',
-        totalInteractions: 31, voiceInteractions: 18, textInteractions: 13, proactiveAlerts: 5,
-        lastInteraction: 'Há 2h', averageResponseTime: '1.4s', satisfaction: 4,
-        status: 'active', topics: ['Clínica Geral', 'Prescrições', 'Teleconsulta'],
-    },
-    {
-        id: 'p3', patientName: 'João Pedro Almeida', patientInitials: 'JP',
-        totalInteractions: 23, voiceInteractions: 20, textInteractions: 3, proactiveAlerts: 3,
-        lastInteraction: 'Há 5h', averageResponseTime: '1.1s', satisfaction: 5,
-        status: 'idle', topics: ['Ortopedia', 'Exames'],
-    },
-    {
-        id: 'p4', patientName: 'Ana Clara Rodrigues', patientInitials: 'AC',
-        totalInteractions: 18, voiceInteractions: 10, textInteractions: 8, proactiveAlerts: 4,
-        lastInteraction: 'Há 1 dia', averageResponseTime: '1.6s', satisfaction: 4,
-        status: 'idle', topics: ['Neurologia', 'Medicações'],
-    },
-    {
-        id: 'p5', patientName: 'Roberto Silva Neto', patientInitials: 'RS',
-        totalInteractions: 12, voiceInteractions: 8, textInteractions: 4, proactiveAlerts: 2,
-        lastInteraction: 'Há 1 dia', averageResponseTime: '1.3s', satisfaction: 5,
-        status: 'idle', topics: ['Endocrinologia', 'Check-up'],
-    },
-    {
-        id: 'p6', patientName: 'Beatriz Oliveira', patientInitials: 'BO',
-        totalInteractions: 5, voiceInteractions: 3, textInteractions: 2, proactiveAlerts: 1,
-        lastInteraction: 'Há 3 dias', averageResponseTime: '1.5s', satisfaction: 4,
-        status: 'new', topics: ['Dermatologia'],
-    },
-    {
-        id: 'p7', patientName: 'Lucas Mendes Costa', patientInitials: 'LM',
-        totalInteractions: 2, voiceInteractions: 2, textInteractions: 0, proactiveAlerts: 0,
-        lastInteraction: 'Há 5 dias', averageResponseTime: '1.8s', satisfaction: 3,
-        status: 'new', topics: ['Clínica Geral'],
-    },
-];
+function getStatus(lastAt: string | null): 'active' | 'idle' | 'new' {
+    if (!lastAt) return 'new';
+    const diff = Date.now() - new Date(lastAt).getTime();
+    const hours = diff / (1000 * 60 * 60);
+    if (hours < 1) return 'active';
+    return 'idle';
+}
 
 // ── Component ────────────────────────────────────────────────────────────────────
 const LizInteractionsMonitor: React.FC = () => {
+    const [patients, setPatients] = useState<MonitorPatientRow[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState<'interactions' | 'recent' | 'name'>('interactions');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'idle' | 'new'>('all');
-    const [selectedPatient, setSelectedPatient] = useState<PatientInteraction | null>(null);
+    const [selectedPatient, setSelectedPatient] = useState<MonitorPatientRow | null>(null);
+    const [lastRefresh, setLastRefresh] = useState(new Date());
 
-    const totals = {
-        interactions: MOCK_INTERACTIONS.reduce((s, p) => s + p.totalInteractions, 0),
-        voice: MOCK_INTERACTIONS.reduce((s, p) => s + p.voiceInteractions, 0),
-        text: MOCK_INTERACTIONS.reduce((s, p) => s + p.textInteractions, 0),
-        proactive: MOCK_INTERACTIONS.reduce((s, p) => s + p.proactiveAlerts, 0),
-        patients: MOCK_INTERACTIONS.length,
+    const loadData = async () => {
+        setLoading(true);
+        const data = await getMonitorData();
+        setPatients(data);
+        setLoading(false);
+        setLastRefresh(new Date());
     };
 
-    const filtered = MOCK_INTERACTIONS
-        .filter((p) => filterStatus === 'all' || p.status === filterStatus)
-        .filter((p) => p.patientName.toLowerCase().includes(searchTerm.toLowerCase()))
+    useEffect(() => { loadData(); }, []);
+
+    // Auto-refresh every 30s
+    useEffect(() => {
+        const interval = setInterval(loadData, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const totals = {
+        interactions: patients.reduce((s, p) => s + p.total, 0),
+        voice: patients.reduce((s, p) => s + p.voice, 0),
+        text: patients.reduce((s, p) => s + p.text, 0),
+        proactive: patients.reduce((s, p) => s + p.proactive, 0),
+        patients: patients.length,
+    };
+
+    const filtered = patients
+        .filter((p) => filterStatus === 'all' || getStatus(p.last_interaction_at) === filterStatus)
+        .filter((p) => p.patient_name.toLowerCase().includes(searchTerm.toLowerCase()))
         .sort((a, b) => {
-            if (sortBy === 'interactions') return b.totalInteractions - a.totalInteractions;
-            if (sortBy === 'name') return a.patientName.localeCompare(b.patientName);
-            return 0; // 'recent' keeps original order
+            if (sortBy === 'interactions') return b.total - a.total;
+            if (sortBy === 'name') return a.patient_name.localeCompare(b.patient_name);
+            if (sortBy === 'recent') {
+                const aT = a.last_interaction_at ? new Date(a.last_interaction_at).getTime() : 0;
+                const bT = b.last_interaction_at ? new Date(b.last_interaction_at).getTime() : 0;
+                return bT - aT;
+            }
+            return 0;
         });
 
     const statusColor: Record<string, string> = {
@@ -112,10 +96,14 @@ const LizInteractionsMonitor: React.FC = () => {
                     </div>
                     <div>
                         <h1 className="text-xl font-bold">Monitor de Interações LIZ</h1>
-                        <p className="text-xs text-slate-500">Acompanhamento em tempo real das conversas entre a LIZ e os pacientes</p>
+                        <p className="text-xs text-slate-500">Dados reais do Supabase · Atualizado {lastRefresh.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    <button onClick={loadData} disabled={loading}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700/50 rounded-full text-[10px] font-bold text-slate-300 transition active:scale-95 disabled:opacity-50">
+                        <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} /> Atualizar
+                    </button>
                     <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-bold text-emerald-400">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                         LIZ ENGINE ONLINE
@@ -195,77 +183,94 @@ const LizInteractionsMonitor: React.FC = () => {
                     <div className="col-span-1 text-center">Ação</div>
                 </div>
 
-                {/* Table Body */}
-                {filtered.length === 0 ? (
-                    <div className="p-8 text-center text-slate-600 text-sm">Nenhum paciente encontrado.</div>
+                {/* Loading state */}
+                {loading && patients.length === 0 ? (
+                    <div className="p-8 text-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-emerald-400 mx-auto mb-2" />
+                        <p className="text-xs text-slate-500">Carregando dados reais do Supabase...</p>
+                    </div>
+                ) : filtered.length === 0 ? (
+                    <div className="p-8 text-center">
+                        <AlertCircle className="w-6 h-6 text-slate-600 mx-auto mb-2" />
+                        <p className="text-sm text-slate-600">
+                            {patients.length === 0
+                                ? 'Nenhuma interação registrada ainda. Use o app do paciente e fale com a LIZ!'
+                                : 'Nenhum paciente encontrado com esses filtros.'}
+                        </p>
+                    </div>
                 ) : (
-                    filtered.map((patient, idx) => (
-                        <div
-                            key={patient.id}
-                            className={`grid grid-cols-12 gap-2 px-4 py-3.5 items-center transition-all hover:bg-slate-800/30 cursor-pointer ${
-                                idx !== filtered.length - 1 ? 'border-b border-slate-700/20' : ''
-                            } ${selectedPatient?.id === patient.id ? 'bg-slate-800/50 ring-1 ring-emerald-500/20' : ''}`}
-                            onClick={() => setSelectedPatient(selectedPatient?.id === patient.id ? null : patient)}
-                        >
-                            {/* Patient */}
-                            <div className="col-span-4 flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1D3461] to-[#0F172A] flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
-                                    {patient.patientInitials}
+                    filtered.map((patient, idx) => {
+                        const status = getStatus(patient.last_interaction_at);
+                        return (
+                            <div
+                                key={patient.patient_id}
+                                className={`grid grid-cols-12 gap-2 px-4 py-3.5 items-center transition-all hover:bg-slate-800/30 cursor-pointer ${
+                                    idx !== filtered.length - 1 ? 'border-b border-slate-700/20' : ''
+                                } ${selectedPatient?.patient_id === patient.patient_id ? 'bg-slate-800/50 ring-1 ring-emerald-500/20' : ''}`}
+                                onClick={() => setSelectedPatient(selectedPatient?.patient_id === patient.patient_id ? null : patient)}
+                            >
+                                {/* Patient */}
+                                <div className="col-span-4 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#1D3461] to-[#0F172A] flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
+                                        {patient.patient_initials}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-semibold text-white truncate">{patient.patient_name}</p>
+                                        <p className="text-[10px] text-slate-500 truncate">
+                                            {patient.topics.length > 0 ? patient.topics.join(' · ') : 'Sem tópicos'}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-white truncate">{patient.patientName}</p>
-                                    <p className="text-[10px] text-slate-500 truncate">{patient.topics.join(' · ')}</p>
+
+                                {/* Total */}
+                                <div className="col-span-1 text-center">
+                                    <span className="text-sm font-bold text-white">{patient.total}</span>
+                                </div>
+
+                                {/* Voice */}
+                                <div className="col-span-1 text-center flex items-center justify-center gap-1">
+                                    <Mic className="w-3 h-3 text-cyan-400" />
+                                    <span className="text-xs text-slate-300">{patient.voice}</span>
+                                </div>
+
+                                {/* Text */}
+                                <div className="col-span-1 text-center flex items-center justify-center gap-1">
+                                    <MessageSquare className="w-3 h-3 text-purple-400" />
+                                    <span className="text-xs text-slate-300">{patient.text}</span>
+                                </div>
+
+                                {/* Proactive Alerts */}
+                                <div className="col-span-1 text-center flex items-center justify-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-amber-400" />
+                                    <span className="text-xs text-slate-300">{patient.proactive}</span>
+                                </div>
+
+                                {/* Last Interaction */}
+                                <div className="col-span-2 text-center">
+                                    <span className="text-xs text-slate-400">{timeAgo(patient.last_interaction_at)}</span>
+                                </div>
+
+                                {/* Status */}
+                                <div className="col-span-1 flex justify-center">
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                                        status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                        : status === 'new' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                        : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                                    }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${statusColor[status]} ${status === 'active' ? 'animate-pulse' : ''}`} />
+                                        {statusLabel[status]}
+                                    </span>
+                                </div>
+
+                                {/* Action */}
+                                <div className="col-span-1 flex justify-center">
+                                    <button className="p-1.5 hover:bg-slate-700 rounded-lg transition">
+                                        <Eye className="w-3.5 h-3.5 text-slate-500" />
+                                    </button>
                                 </div>
                             </div>
-
-                            {/* Total */}
-                            <div className="col-span-1 text-center">
-                                <span className="text-sm font-bold text-white">{patient.totalInteractions}</span>
-                            </div>
-
-                            {/* Voice */}
-                            <div className="col-span-1 text-center flex items-center justify-center gap-1">
-                                <Mic className="w-3 h-3 text-cyan-400" />
-                                <span className="text-xs text-slate-300">{patient.voiceInteractions}</span>
-                            </div>
-
-                            {/* Text */}
-                            <div className="col-span-1 text-center flex items-center justify-center gap-1">
-                                <MessageSquare className="w-3 h-3 text-purple-400" />
-                                <span className="text-xs text-slate-300">{patient.textInteractions}</span>
-                            </div>
-
-                            {/* Proactive Alerts */}
-                            <div className="col-span-1 text-center flex items-center justify-center gap-1">
-                                <Sparkles className="w-3 h-3 text-amber-400" />
-                                <span className="text-xs text-slate-300">{patient.proactiveAlerts}</span>
-                            </div>
-
-                            {/* Last Interaction */}
-                            <div className="col-span-2 text-center">
-                                <span className="text-xs text-slate-400">{patient.lastInteraction}</span>
-                            </div>
-
-                            {/* Status */}
-                            <div className="col-span-1 flex justify-center">
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                                    patient.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                    : patient.status === 'new' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                                    : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
-                                }`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${statusColor[patient.status]} ${patient.status === 'active' ? 'animate-pulse' : ''}`} />
-                                    {statusLabel[patient.status]}
-                                </span>
-                            </div>
-
-                            {/* Action */}
-                            <div className="col-span-1 flex justify-center">
-                                <button className="p-1.5 hover:bg-slate-700 rounded-lg transition">
-                                    <Eye className="w-3.5 h-3.5 text-slate-500" />
-                                </button>
-                            </div>
-                        </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
@@ -275,60 +280,52 @@ const LizInteractionsMonitor: React.FC = () => {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1D3461] to-[#0F172A] flex items-center justify-center text-sm font-bold">
-                                {selectedPatient.patientInitials}
+                                {selectedPatient.patient_initials}
                             </div>
                             <div>
-                                <h3 className="text-base font-bold">{selectedPatient.patientName}</h3>
+                                <h3 className="text-base font-bold">{selectedPatient.patient_name}</h3>
                                 <p className="text-[10px] text-slate-500">Detalhamento de interações com a LIZ</p>
                             </div>
                         </div>
-                        <span className="text-xs text-slate-500">Tempo médio de resposta: <span className="text-emerald-400 font-bold">{selectedPatient.averageResponseTime}</span></span>
+                        <span className="text-xs text-slate-500">Última: <span className="text-emerald-400 font-bold">{timeAgo(selectedPatient.last_interaction_at)}</span></span>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                         <div className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/30">
                             <p className="text-[10px] text-slate-500 font-semibold uppercase">Total</p>
-                            <p className="text-lg font-bold text-white">{selectedPatient.totalInteractions}</p>
+                            <p className="text-lg font-bold text-white">{selectedPatient.total}</p>
                         </div>
                         <div className="bg-slate-800/50 rounded-xl p-3 border border-cyan-800/30">
                             <p className="text-[10px] text-cyan-400 font-semibold uppercase flex items-center gap-1"><Mic className="w-3 h-3" /> Voz</p>
-                            <p className="text-lg font-bold text-cyan-300">{selectedPatient.voiceInteractions}</p>
+                            <p className="text-lg font-bold text-cyan-300">{selectedPatient.voice}</p>
                         </div>
                         <div className="bg-slate-800/50 rounded-xl p-3 border border-purple-800/30">
                             <p className="text-[10px] text-purple-400 font-semibold uppercase flex items-center gap-1"><MessageSquare className="w-3 h-3" /> Texto</p>
-                            <p className="text-lg font-bold text-purple-300">{selectedPatient.textInteractions}</p>
+                            <p className="text-lg font-bold text-purple-300">{selectedPatient.text}</p>
                         </div>
                         <div className="bg-slate-800/50 rounded-xl p-3 border border-amber-800/30">
                             <p className="text-[10px] text-amber-400 font-semibold uppercase flex items-center gap-1"><Sparkles className="w-3 h-3" /> Proativos</p>
-                            <p className="text-lg font-bold text-amber-300">{selectedPatient.proactiveAlerts}</p>
+                            <p className="text-lg font-bold text-amber-300">{selectedPatient.proactive}</p>
                         </div>
                     </div>
 
                     {/* Topics */}
-                    <div>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase mb-2">Tópicos mais frequentes</p>
-                        <div className="flex flex-wrap gap-2">
-                            {selectedPatient.topics.map((t) => (
-                                <span key={t} className="px-2.5 py-1 bg-slate-800 border border-slate-700/50 rounded-full text-[10px] font-semibold text-slate-300">{t}</span>
-                            ))}
+                    {selectedPatient.topics.length > 0 && (
+                        <div>
+                            <p className="text-[10px] text-slate-500 font-semibold uppercase mb-2">Tópicos registrados</p>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedPatient.topics.map((t) => (
+                                    <span key={t} className="px-2.5 py-1 bg-slate-800 border border-slate-700/50 rounded-full text-[10px] font-semibold text-slate-300">{t}</span>
+                                ))}
+                            </div>
                         </div>
-                    </div>
-
-                    {/* Satisfaction */}
-                    <div className="mt-4 flex items-center gap-2">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Satisfação:</p>
-                        <div className="flex gap-0.5">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <span key={star} className={`text-sm ${star <= selectedPatient.satisfaction ? 'text-amber-400' : 'text-slate-700'}`}>★</span>
-                            ))}
-                        </div>
-                    </div>
+                    )}
                 </div>
             )}
 
             {/* Footer note */}
             <div className="mt-4 text-center">
-                <p className="text-[10px] text-slate-600">Os dados são atualizados em tempo real conforme a LIZ interage com os pacientes via app ELYON.</p>
+                <p className="text-[10px] text-slate-600">Dados reais do Supabase · Auto-refresh a cada 30s · Interações são registradas via app do paciente.</p>
             </div>
         </div>
     );

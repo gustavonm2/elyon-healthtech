@@ -11,7 +11,7 @@ import {
 import {
     loginPatient, registerPatient, calculateAge, formatCPF, maskCPF,
     listMedications, addMedication, toggleMedication, deleteMedication,
-    getHealthProfile, upsertHealthProfile,
+    getHealthProfile, upsertHealthProfile, logLizInteraction,
     type Patient, type PatientInsert, type Medication, type MedicationInsert, type HealthProfile
 } from '../services/patientService';
 import { PrescricoesScreenLive, TriagemSaudeScreen } from './PatientScreens';
@@ -226,6 +226,10 @@ export const PatientApp: React.FC = () => {
                 const text = data.candidates[0].content.parts[0].text.trim();
                 if (text && text.toUpperCase() !== 'NONE') {
                     setLizProactiveAlert(text);
+                    // Log proactive interaction
+                    if (loggedPatient?.id) {
+                        logLizInteraction(loggedPatient.id, 'proactive', null, text, 'Alerta Proativo');
+                    }
                 }
             } catch {
                 // Silent fail — proactive analysis is non-blocking
@@ -326,6 +330,10 @@ export const PatientApp: React.FC = () => {
                 setConversation((prev) => [...prev, { id: `liz-${Date.now()}`, role: 'assistant', text: texto, timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) }]);
                 setLizResponse(texto);
                 speakResponse(texto);
+                // Log interaction to Supabase
+                if (loggedPatient?.id) {
+                    logLizInteraction(loggedPatient.id, 'voice', userText, texto, 'Conversa por Voz');
+                }
             } catch (err: any) { setErrorMessage(err.message); setOrbState('IDLE'); }
         }, [apiKey, conversation, speakResponse, systemPrompt]
     );

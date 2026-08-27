@@ -243,3 +243,95 @@ export async function upsertHealthProfile(
     return { data: data as HealthProfile, error: null };
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════
+//  LIZ INTERACTIONS (Logging & Monitor)
+// ══════════════════════════════════════════════════════════════════════════════════
+
+export interface LizInteraction {
+    id: string;
+    patient_id: string;
+    interaction_type: 'voice' | 'text' | 'proactive';
+    patient_message: string | null;
+    liz_response: string | null;
+    topic: string | null;
+    created_at: string;
+}
+
+export async function logLizInteraction(
+    patientId: string,
+    type: 'voice' | 'text' | 'proactive',
+    patientMessage?: string | null,
+    lizResponse?: string | null,
+    topic?: string | null
+): Promise<void> {
+    await supabasePatients.from('liz_interactions').insert({
+        patient_id: patientId,
+        interaction_type: type,
+        patient_message: patientMessage || null,
+        liz_response: lizResponse || null,
+        topic: topic || null,
+    });
+}
+
+export interface MonitorPatientRow {
+    patient_id: string;
+    patient_name: string;
+    patient_initials: string;
+    total: number;
+    voice: number;
+    text: number;
+    proactive: number;
+    last_interaction_at: string | null;
+    topics: string[];
+}
+
+export async function getMonitorData(): Promise<MonitorPatientRow[]> {
+    // 1. Get all interactions joined with patient names
+    const { data: interactions, error } = await supabasePatients
+        .from('liz_interactions')
+        .select('patient_id, interaction_type, topic, created_at, patients!inner(full_name)')
+        .order('created_at', { ascending: false });
+
+    if (error || !interactions || interactions.length === 0) return [];
+
+    // 2. Aggregate per patient
+    const map = new Map<string, {
+        name: string; total: number; voice: number; text: number; proactive: number;
+        lastAt: string; topicSet: Set<string>;
+    }>();
+
+    for (const row of interactions) {
+        const pid = row.patient_id;
+        const pName = (row as any).patients?.full_name || 'Paciente';
+        if (!map.has(pid)) {
+            map.set(pid, { name: pName, total: 0, voice: 0, text: 0, proactive: 0, lastAt: row.created_at, topicSet: new Set() });
+        }
+        const entry = map.get(pid)!;
+        entry.total++;
+        if (row.interaction_type === 'voice') entry.voice++;
+        else if (row.interaction_type === 'text') entry.text++;
+        else if (row.interaction_type === 'proactive') entry.proactive++;
+        if (row.topic) entry.topicSet.add(row.topic);
+        if (row.created_at > entry.lastAt) entry.lastAt = row.created_at;
+    }
+
+    // 3. Convert to array sorted by total desc
+    const result: MonitorPatientRow[] = [];
+    map.forEach((v, pid) => {
+        const initials = v.name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+        result.push({
+            patient_id: pid,
+            patient_name: v.name,
+            patient_initials: initials,
+            total: v.total,
+            voice: v.voice,
+            text: v.text,
+            proactive: v.proactive,
+            last_interaction_at: v.lastAt,
+            topics: Array.from(v.topicSet),
+        });
+    });
+
+    result.sort((a, b) => b.total - a.total);
+    return result;
+}
