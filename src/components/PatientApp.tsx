@@ -12,13 +12,17 @@ import {
     loginPatient, registerPatient, calculateAge, formatCPF, maskCPF,
     listMedications, addMedication, toggleMedication, deleteMedication,
     getHealthProfile, upsertHealthProfile, logLizInteraction,
-    type Patient, type PatientInsert, type Medication, type MedicationInsert, type HealthProfile
+    listTodayMedicationLogs, logMedicationStatus, getMedicationAdherence,
+    getLatestVitalSign, listVitalSigns,
+    type Patient, type PatientInsert, type Medication, type MedicationInsert,
+    type HealthProfile, type VitalSign, type MedicationLog
 } from '../services/patientService';
 import { PrescricoesScreenLive, TriagemSaudeScreen } from './PatientScreens';
 import { PatientCardScreen } from './PatientCardScreen';
+import { VitalsScreen } from './VitalsScreen';
 
 // ── Types ────────────────────────────────────────────────────────────────────────
-type AppScreen = 'splash' | 'login' | 'register' | 'home' | 'consultas' | 'liz' | 'perfil' | 'prescricoes' | 'exames' | 'triagem' | 'cartao';
+type AppScreen = 'splash' | 'login' | 'register' | 'home' | 'consultas' | 'liz' | 'perfil' | 'prescricoes' | 'exames' | 'triagem' | 'cartao' | 'sinais-vitais';
 type LizOrbState = 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING';
 
 interface ConversationEntry {
@@ -35,6 +39,9 @@ interface ClinicalContext {
     nextAppointment: string;
     activeMeds: number;
     activeMedsList: string[];
+    adherenceRate: number;
+    adherenceSummary: string;
+    latestVitalsSummary: string;
     pendingExams: number;
     pendingExamsList: string[];
     availableResults: number;
@@ -87,18 +94,44 @@ const NOTIFICATIONS = [
 ];
 
 // ── Clinical Context Builder ─────────────────────────────────────────────────────
-function buildClinicalContext(patient: typeof PATIENT): ClinicalContext {
-    const activeMeds = PRESCRIPTIONS.filter((p) => p.active);
+function buildClinicalContext(
+    patient: typeof PATIENT,
+    meds: Medication[],
+    adherence: { todayRate: number; totalScheduledToday: number; takenToday: number; skippedToday: number; pendingToday: number } | null,
+    vitals: VitalSign | null,
+    profile: HealthProfile | null
+): ClinicalContext {
+    const activeMeds = meds.length > 0 ? meds.filter((p) => p.active) : PRESCRIPTIONS.filter((p) => p.active);
     const pendingExams = EXAMS.filter((e) => e.status === 'Pendente');
     const availableResults = EXAMS.filter((e) => e.status === 'Resultado Disponível');
     const apt = NEXT_APPOINTMENTS[0];
+
+    const adherenceSummary = adherence
+        ? `Taxa de adesão hoje: ${adherence.todayRate}% (${adherence.takenToday}/${adherence.totalScheduledToday} doses tomadas, ${adherence.pendingToday} pendentes, ${adherence.skippedToday} puladas)`
+        : 'Adesão de hoje não calculada';
+
+    let latestVitalsSummary = 'Sem sinais vitais registrados recentemente';
+    if (vitals) {
+        const parts = [];
+        if (vitals.systolic_bp && vitals.diastolic_bp) parts.push(`PA: ${vitals.systolic_bp}/${vitals.diastolic_bp} mmHg`);
+        if (vitals.heart_rate) parts.push(`FC: ${vitals.heart_rate} bpm`);
+        if (vitals.glucose) parts.push(`Glicemia: ${vitals.glucose} mg/dL (${vitals.glucose_context || 'jejum'})`);
+        if (vitals.oxygen_saturation) parts.push(`SpO2: ${vitals.oxygen_saturation}%`);
+        if (vitals.temperature) parts.push(`Temp: ${vitals.temperature}°C`);
+        if (vitals.weight) parts.push(`Peso: ${vitals.weight} kg`);
+        if (parts.length > 0) latestVitalsSummary = parts.join(', ');
+    }
+
     return {
         patientName: patient.name,
         patientAge: patient.age,
         bloodType: patient.bloodType,
         nextAppointment: apt ? `${apt.specialty} com ${apt.doctor} em ${apt.date} às ${apt.time} (${apt.type})` : 'Nenhuma consulta agendada',
         activeMeds: activeMeds.length,
-        activeMedsList: activeMeds.map((m) => `${m.med} - ${m.dosage}`),
+        activeMedsList: activeMeds.map((m: any) => `${m.medication_name || m.med} - ${m.dosage || ''} (Horários: ${(m.schedules || []).join(', ') || m.frequency || '08:00'})`),
+        adherenceRate: adherence?.todayRate ?? 100,
+        adherenceSummary,
+        latestVitalsSummary,
         pendingExams: pendingExams.length,
         pendingExamsList: pendingExams.map((e) => e.name),
         availableResults: availableResults.length,
@@ -107,24 +140,26 @@ function buildClinicalContext(patient: typeof PATIENT): ClinicalContext {
 }
 
 function buildSystemPrompt(ctx: ClinicalContext): string {
-    return `Você é a LIZ, assistente de saúde inteligente do sistema ELYON HealthTech.
+    return `Você é a LIZ, assistente de saúde inteligente e coordenadora de cuidado do sistema ELYON HealthTech.
 
 CONTEXTO CLÍNICO EM TEMPO REAL DO PACIENTE:
 Você está atendendo o paciente ${ctx.patientName}, ${ctx.patientAge} anos, tipo sanguíneo ${ctx.bloodType}.
 Os dados atuais do painel clínico dele são:
 - Próxima consulta: ${ctx.nextAppointment}
 - Medicamentos ativos (${ctx.activeMeds}): ${ctx.activeMedsList.join('; ')}
+- Adesão ao Tratamento Hoje: ${ctx.adherenceSummary}
+- Últimos Sinais Vitais: ${ctx.latestVitalsSummary}
 - Exames pendentes (${ctx.pendingExams}): ${ctx.pendingExamsList.join('; ')}
 - Resultados disponíveis: ${ctx.availableResults}
 - Queixas recentes: ${ctx.recentComplaints.join('; ')}
 
 REGRAS DE COMPORTAMENTO:
 1. Sempre cumprimente o paciente pelo primeiro nome.
-2. Use os dados clínicos acima para coordenar o cuidado de forma proativa. Cite dados específicos.
-3. Responda de forma concisa e humanizada, como em uma conversa oral natural.
-4. Não use markdown, asteriscos ou formatação — sua resposta será lida em voz alta.
-5. Ao receber relatos de sintomas, oriente com segurança e recomende consulta.
-6. Quando perguntado sobre medicações, exames ou consultas, consulte os dados acima.`;
+2. Monitore proativamente a adesão aos medicamentos: se o paciente esqueceu doses ou tem remédios pendentes, pergunte com empatia se ele precisa de ajuda ou se já tomou.
+3. Se os sinais vitais estiverem alterados (ex: pressão alta, glicose desregulada), recomende cautela e alerte o paciente.
+4. Responda de forma concisa e humanizada, como em uma conversa oral natural.
+5. Não use markdown, asteriscos ou formatação — sua resposta será lida em voz alta pela síntese de fala.
+6. Ao receber relatos de sintomas, oriente com segurança e recomende consulta médica.`;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────────
@@ -170,9 +205,23 @@ export const PatientApp: React.FC = () => {
     // ── Proactive Analysis (Background LLM Check) ────────────────────────────
     const [lizProactiveAlert, setLizProactiveAlert] = useState<string | null>(null);
 
-    // ── Patient Data (Medications + Health Profile from Supabase) ─────────────
+    // ── Patient Data (Medications + Health Profile + Vitals + Adherence) ──────
     const [medications, setMedications] = useState<Medication[]>([]);
     const [healthProfile, setHealthProfile] = useState<HealthProfile | null>(null);
+    const [latestVitals, setLatestVitals] = useState<VitalSign | null>(null);
+    const [adherenceStats, setAdherenceStats] = useState<{
+        todayRate: number;
+        totalScheduledToday: number;
+        takenToday: number;
+        skippedToday: number;
+        pendingToday: number;
+    } | null>(null);
+    const [activeMedReminder, setActiveMedReminder] = useState<{
+        medId: string;
+        medName: string;
+        dosage: string;
+        time: string;
+    } | null>(null);
 
     const recognitionRef = useRef<any>(null);
     const conversationEndRef = useRef<HTMLDivElement>(null);
@@ -192,7 +241,7 @@ export const PatientApp: React.FC = () => {
         avatar: null as string | null,
     } : PATIENT;
 
-    const clinicalContext = buildClinicalContext(patientDisplayData);
+    const clinicalContext = buildClinicalContext(patientDisplayData, medications, adherenceStats, latestVitals, healthProfile);
     const systemPrompt = buildSystemPrompt(clinicalContext);
 
     const unreadCount = notifications.filter((n) => !n.read).length;
@@ -247,19 +296,99 @@ export const PatientApp: React.FC = () => {
         }
     }, [screen]);
 
+    // ── Web Notifications Permission Request ─────────────────────────────────
+    const requestNotificationPermission = async () => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            try {
+                await Notification.requestPermission();
+            } catch { /* ignore */ }
+        }
+    };
+
     // ── Load Patient Data from Supabase ──────────────────────────────────────
-    useEffect(() => {
+    const refreshPatientData = useCallback(async () => {
         if (!loggedPatient) return;
-        const loadData = async () => {
-            const [meds, profile] = await Promise.all([
-                listMedications(loggedPatient.id),
-                getHealthProfile(loggedPatient.id),
-            ]);
-            setMedications(meds);
-            setHealthProfile(profile);
-        };
-        loadData();
+        const [meds, profile, vitals, adh] = await Promise.all([
+            listMedications(loggedPatient.id),
+            getHealthProfile(loggedPatient.id),
+            getLatestVitalSign(loggedPatient.id),
+            getMedicationAdherence(loggedPatient.id),
+        ]);
+        setMedications(meds);
+        setHealthProfile(profile);
+        setLatestVitals(vitals);
+        setAdherenceStats(adh);
     }, [loggedPatient]);
+
+    useEffect(() => {
+        if (loggedPatient) {
+            refreshPatientData();
+            requestNotificationPermission();
+        }
+    }, [loggedPatient, refreshPatientData]);
+
+    // ── Medication Reminders & Notification Timer ────────────────────────────
+    useEffect(() => {
+        if (!loggedPatient || medications.length === 0) return;
+
+        const checkReminders = async () => {
+            const now = new Date();
+            const todayLogs = await listTodayMedicationLogs(loggedPatient.id);
+            const activeMeds = medications.filter(m => m.active);
+
+            for (const med of activeMeds) {
+                const times = med.schedules && med.schedules.length > 0 ? med.schedules : ['08:00'];
+                for (const time of times) {
+                    const alreadyLogged = todayLogs.some(l => l.medication_id === med.id && l.scheduled_time === time);
+                    if (!alreadyLogged) {
+                        const [tH, tM] = time.split(':').map(Number);
+                        const isDue = (now.getHours() > tH) || (now.getHours() === tH && now.getMinutes() >= tM);
+                        
+                        if (isDue) {
+                            setActiveMedReminder({
+                                medId: med.id,
+                                medName: med.medication_name,
+                                dosage: med.dosage,
+                                time: time,
+                            });
+
+                            if ('Notification' in window && Notification.permission === 'granted') {
+                                new Notification(`💊 Lembrete: ${med.medication_name}`, {
+                                    body: `Horário: ${time} • ${med.dosage}. Não esqueça de tomar sua medicação!`,
+                                    icon: '/elyon-logo.jpg',
+                                });
+                            }
+
+                            const notifText = `Lembrete: Tomar ${med.medication_name} (${med.dosage}) programado para às ${time}.`;
+                            setNotifications(prev => {
+                                if (prev.some(n => n.text === notifText)) return prev;
+                                return [{ id: `med-${Date.now()}`, text: notifText, time: 'Agora', read: false }, ...prev];
+                            });
+                            return;
+                        }
+                    }
+                }
+            }
+        };
+
+        checkReminders();
+        const interval = setInterval(checkReminders, 30000);
+        return () => clearInterval(interval);
+    }, [loggedPatient, medications]);
+
+    const handleTakeReminder = async (medId: string, time: string) => {
+        if (!loggedPatient) return;
+        await logMedicationStatus(loggedPatient.id, medId, time, 'taken');
+        setActiveMedReminder(null);
+        refreshPatientData();
+    };
+
+    const handleSkipReminder = async (medId: string, time: string) => {
+        if (!loggedPatient) return;
+        await logMedicationStatus(loggedPatient.id, medId, time, 'skipped');
+        setActiveMedReminder(null);
+        refreshPatientData();
+    };
 
     // ── Login / Logout ───────────────────────────────────────────────────────
     const handleLogin = (patient: Patient) => {
@@ -271,6 +400,11 @@ export const PatientApp: React.FC = () => {
     const handleLogout = () => {
         setIsLoggedIn(false);
         setLoggedPatient(null);
+        setMedications([]);
+        setHealthProfile(null);
+        setLatestVitals(null);
+        setAdherenceStats(null);
+        setActiveMedReminder(null);
         setOrbState('IDLE');
         setConversation([]);
         setTranscript('');
@@ -400,13 +534,26 @@ export const PatientApp: React.FC = () => {
                             showNotifications={showNotifications} setShowNotifications={setShowNotifications}
                             notifications={notifications} markAllRead={markAllRead} onTalkToLiz={handleFabClick} orbState={orbState}
                             lizProactiveAlert={lizProactiveAlert} onDismissAlert={() => setLizProactiveAlert(null)}
-                            healthProfile={healthProfile} />
+                            healthProfile={healthProfile}
+                            adherenceStats={adherenceStats}
+                            latestVitals={latestVitals}
+                            activeMedReminder={activeMedReminder}
+                            onTakeReminder={handleTakeReminder}
+                            onSkipReminder={handleSkipReminder}
+                            onRequestNotificationPermission={requestNotificationPermission} />
                     )}
                     {screen === 'consultas' && <ConsultasScreen navigateTo={navigateTo} />}
                     {screen === 'prescricoes' && (
                         <PrescricoesScreenLive navigateTo={navigateTo}
                             medications={medications} setMedications={setMedications}
-                            patientId={loggedPatient?.id || null} mockPrescriptions={PRESCRIPTIONS} />
+                            patientId={loggedPatient?.id || null} mockPrescriptions={PRESCRIPTIONS}
+                            onAdherenceChange={refreshPatientData} />
+                    )}
+                    {screen === 'sinais-vitais' && loggedPatient && (
+                        <VitalsScreen navigateTo={navigateTo}
+                            patientId={loggedPatient.id}
+                            patientName={patientDisplayData.name}
+                            onVitalSaved={refreshPatientData} />
                     )}
                     {screen === 'exames' && <ExamesScreen navigateTo={navigateTo} />}
                     {screen === 'triagem' && loggedPatient && (
@@ -848,7 +995,18 @@ const HomeScreen: React.FC<{
     onTalkToLiz: () => void; orbState: LizOrbState;
     lizProactiveAlert: string | null; onDismissAlert: () => void;
     healthProfile: HealthProfile | null;
-}> = ({ navigateTo, patient, unreadCount, showNotifications, setShowNotifications, notifications, markAllRead, onTalkToLiz, orbState, lizProactiveAlert, onDismissAlert, healthProfile }) => (
+    adherenceStats: { todayRate: number; totalScheduledToday: number; takenToday: number; skippedToday: number; pendingToday: number } | null;
+    latestVitals: VitalSign | null;
+    activeMedReminder: { medId: string; medName: string; dosage: string; time: string } | null;
+    onTakeReminder: (medId: string, time: string) => void;
+    onSkipReminder: (medId: string, time: string) => void;
+    onRequestNotificationPermission: () => void;
+}> = ({
+    navigateTo, patient, unreadCount, showNotifications, setShowNotifications,
+    notifications, markAllRead, onTalkToLiz, orbState, lizProactiveAlert, onDismissAlert,
+    healthProfile, adherenceStats, latestVitals, activeMedReminder,
+    onTakeReminder, onSkipReminder, onRequestNotificationPermission
+}) => (
     <div className="bg-gradient-to-b from-[#1D3461] to-[#162749] min-h-full">
         <div className="px-5 pt-12 pb-8 text-white">
             <div className="flex items-center justify-between mb-6">
@@ -861,28 +1019,65 @@ const HomeScreen: React.FC<{
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={() => setShowNotifications(!showNotifications)}
-                        className="relative p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                        className="relative p-2 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/20 transition">
                         <Bell className="w-5 h-5 text-white" />
                         {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center">{unreadCount}</span>
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center animate-pulse">{unreadCount}</span>
                         )}
                     </button>
                 </div>
             </div>
 
+            {/* Central de Notificações Popover */}
             {showNotifications && (
-                <div className="bg-white rounded-2xl p-4 mb-4 shadow-xl text-slate-800 animate-fadeIn">
+                <div className="bg-white rounded-2xl p-4 mb-4 shadow-2xl text-slate-800 animate-fadeIn border border-slate-100">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-bold text-slate-900">Notificações</h3>
-                        <button onClick={markAllRead} className="text-[10px] font-semibold text-blue-600">Marcar como lidas</button>
+                        <div className="flex items-center gap-1.5">
+                            <Bell className="w-4 h-4 text-[#1D3461]" />
+                            <h3 className="text-sm font-bold text-slate-900">Notificações & Lembretes</h3>
+                        </div>
+                        <button onClick={markAllRead} className="text-[10px] font-semibold text-blue-600 hover:underline">Marcar como lidas</button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
                         {notifications.map((n) => (
-                            <div key={n.id} className={`text-xs p-2.5 rounded-xl ${n.read ? 'bg-slate-50 text-slate-500' : 'bg-blue-50 text-slate-800 border border-blue-100'}`}>
+                            <div key={n.id} className={`text-xs p-2.5 rounded-xl transition ${n.read ? 'bg-slate-50 text-slate-500' : 'bg-blue-50 text-slate-800 border border-blue-100 font-medium'}`}>
                                 <p className="leading-relaxed">{n.text}</p>
-                                <span className="text-[10px] text-slate-400 mt-1 block">{n.time}</span>
+                                <span className="text-[9px] text-slate-400 mt-1 block">{n.time}</span>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* ── ⏰ MEDICATION REMINDER INTERACTIVE BANNER ── */}
+            {activeMedReminder && (
+                <div className="mb-4 bg-gradient-to-r from-teal-500/25 to-emerald-500/25 backdrop-blur-md border-2 border-teal-400/50 rounded-2xl p-4 relative overflow-hidden shadow-lg animate-pulse">
+                    <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-teal-400/30 flex items-center justify-center flex-shrink-0">
+                                <Clock className="w-5 h-5 text-teal-200" />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black tracking-wider uppercase text-teal-300">Hora do Medicamento ({activeMedReminder.time})</span>
+                                <p className="text-sm font-bold text-white leading-tight">{activeMedReminder.medName}</p>
+                                <p className="text-xs text-blue-100 mt-0.5">{activeMedReminder.dosage}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-3">
+                        <button
+                            onClick={() => onTakeReminder(activeMedReminder.medId, activeMedReminder.time)}
+                            className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition active:scale-95 shadow-md shadow-emerald-500/30 flex items-center justify-center gap-1.5"
+                        >
+                            <CheckCircle className="w-3.5 h-3.5" /> Já Tomei
+                        </button>
+                        <button
+                            onClick={() => onSkipReminder(activeMedReminder.medId, activeMedReminder.time)}
+                            className="px-3 py-2 bg-white/10 hover:bg-white/20 text-slate-200 rounded-xl text-xs font-semibold transition active:scale-95"
+                        >
+                            Pular
+                        </button>
                     </div>
                 </div>
             )}
@@ -890,7 +1085,6 @@ const HomeScreen: React.FC<{
             {/* ── LIZ Proactive Alert Banner ── */}
             {lizProactiveAlert && (
                 <div className="mb-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-sm border border-emerald-400/30 rounded-2xl p-4 relative overflow-hidden">
-                    {/* Subtle glow effect */}
                     <div className="absolute -top-4 -right-4 w-16 h-16 bg-emerald-400/10 rounded-full blur-xl pointer-events-none" />
                     <div className="flex items-start gap-3 relative z-10">
                         <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -935,22 +1129,23 @@ const HomeScreen: React.FC<{
 
         <div className="bg-white rounded-t-3xl -mt-2 px-5 pt-6 pb-4 min-h-[400px]">
             <h2 className="text-sm font-bold text-slate-900 mb-4">Acesso Rápido</h2>
-            <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="grid grid-cols-3 gap-2.5 mb-6">
                 {[
                     { icon: Calendar, label: 'Consultas', color: 'bg-blue-50 text-blue-600 border-blue-100', action: () => navigateTo('consultas') },
                     { icon: Pill, label: 'Prescrições', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', action: () => navigateTo('prescricoes') },
+                    { icon: Activity, label: 'Sinais Vitais', color: 'bg-rose-50 text-rose-600 border-rose-100', action: () => navigateTo('sinais-vitais') },
                     { icon: FlaskConical, label: 'Exames', color: 'bg-purple-50 text-purple-600 border-purple-100', action: () => navigateTo('exames') },
                     { icon: CreditCard, label: 'Cartão Saúde', color: 'bg-amber-50 text-amber-600 border-amber-100', action: () => navigateTo('cartao') },
                     { icon: Mic, label: 'Falar com LIZ', color: 'bg-cyan-50 text-cyan-600 border-cyan-100', action: onTalkToLiz, isMic: true },
                 ].map((item) => (
                     <button key={item.label} onClick={item.action}
-                        className={`flex flex-col items-center gap-2 p-5 rounded-2xl border transition-all active:scale-95 ${item.color} ${
+                        className={`flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl border transition-all active:scale-95 text-center ${item.color} ${
                             (item as any).isMic && orbState === 'THINKING' ? 'animate-pulse ring-2 ring-indigo-400' : ''
                         }`}>
-                        {(item as any).isMic && orbState === 'THINKING' ? <Loader2 className="w-7 h-7 animate-spin" />
-                            : (item as any).isMic && orbState === 'SPEAKING' ? <Volume2 className="w-7 h-7 animate-pulse" />
-                            : <item.icon className="w-7 h-7" />}
-                        <span className="text-xs font-bold">{item.label}</span>
+                        {(item as any).isMic && orbState === 'THINKING' ? <Loader2 className="w-5 h-5 animate-spin" />
+                            : (item as any).isMic && orbState === 'SPEAKING' ? <Volume2 className="w-5 h-5 animate-pulse" />
+                            : <item.icon className="w-5 h-5" />}
+                        <span className="text-[11px] font-bold leading-tight">{item.label}</span>
                     </button>
                 ))}
             </div>
@@ -984,23 +1179,70 @@ const HomeScreen: React.FC<{
                 </div>
             </button>
 
+            {/* Resumo de Saúde Atualizado */}
             <h2 className="text-sm font-bold text-slate-900 mb-3">Resumo de Saúde</h2>
             <div className="space-y-2.5">
-                {[
-                    { icon: Droplets, label: 'Tipo Sanguíneo', value: patient.bloodType, iconBg: 'bg-red-50 border-red-100', iconColor: 'text-red-500' },
-                    { icon: Pill, label: 'Medicamentos Ativos', value: `${PRESCRIPTIONS.filter((p) => p.active).length} medicamentos`, iconBg: 'bg-emerald-50 border-emerald-100', iconColor: 'text-emerald-600' },
-                    { icon: FlaskConical, label: 'Exames Pendentes', value: `${EXAMS.filter((e) => e.status === 'Pendente').length} pendentes`, iconBg: 'bg-amber-50 border-amber-100', iconColor: 'text-amber-600' },
-                ].map((item) => (
-                    <div key={item.label} className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
-                        <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${item.iconBg}`}>
-                            <item.icon className={`w-5 h-5 ${item.iconColor}`} />
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-[10px] text-slate-500 font-semibold uppercase">{item.label}</p>
-                            <p className="text-sm font-bold text-slate-900">{item.value}</p>
-                        </div>
+                {/* Adesão às medicações */}
+                <button
+                    onClick={() => navigateTo('prescricoes')}
+                    className="w-full flex items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition text-left"
+                >
+                    <div className="w-10 h-10 rounded-xl border border-emerald-100 bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <Pill className="w-5 h-5" />
                     </div>
-                ))}
+                    <div className="flex-1">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Adesão Medicamentosa (Hoje)</p>
+                        <p className="text-sm font-bold text-slate-900">
+                            {adherenceStats ? `${adherenceStats.todayRate}% tomada (${adherenceStats.takenToday}/${adherenceStats.totalScheduledToday} doses)` : 'Gerenciar Prescrições'}
+                        </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+
+                {/* Sinais Vitais Recentes */}
+                <button
+                    onClick={() => navigateTo('sinais-vitais')}
+                    className="w-full flex items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition text-left"
+                >
+                    <div className="w-10 h-10 rounded-xl border border-rose-100 bg-rose-50 flex items-center justify-center text-rose-600">
+                        <Activity className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Últimos Sinais Vitais</p>
+                        <p className="text-sm font-bold text-slate-900">
+                            {latestVitals && latestVitals.systolic_bp && latestVitals.diastolic_bp
+                                ? `PA: ${latestVitals.systolic_bp}/${latestVitals.diastolic_bp} mmHg${latestVitals.heart_rate ? ` • FC: ${latestVitals.heart_rate} bpm` : ''}`
+                                : 'Toque para registrar medição'}
+                        </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+
+                {/* Tipo Sanguíneo */}
+                <div className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-10 h-10 rounded-xl border border-red-100 bg-red-50 flex items-center justify-center text-red-500">
+                        <Droplets className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Tipo Sanguíneo</p>
+                        <p className="text-sm font-bold text-slate-900">{patient.bloodType}</p>
+                    </div>
+                </div>
+
+                {/* Exames Pendentes */}
+                <button
+                    onClick={() => navigateTo('exames')}
+                    className="w-full flex items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition text-left"
+                >
+                    <div className="w-10 h-10 rounded-xl border border-amber-100 bg-amber-50 flex items-center justify-center text-amber-600">
+                        <FlaskConical className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Exames Pendentes</p>
+                        <p className="text-sm font-bold text-slate-900">{`${EXAMS.filter((e) => e.status === 'Pendente').length} pendentes`}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
             </div>
         </div>
     </div>

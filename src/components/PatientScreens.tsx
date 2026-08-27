@@ -1,48 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft, ArrowRight, Pill, CheckCircle, AlertCircle, Plus,
     Loader2, Stethoscope, Sparkles, X as XIcon, Trash2, ToggleLeft, ToggleRight,
-    ClipboardList, Brain, Dumbbell, Moon, Heart, Coffee, Cigarette, Wine, HeartPulse, Siren
+    ClipboardList, Brain, Dumbbell, Moon, Heart, Coffee, Cigarette, Wine, HeartPulse, Siren,
+    Clock, Check, X, ShieldAlert, TrendingUp, BellRing
 } from 'lucide-react';
 import {
     addMedication, toggleMedication, deleteMedication, upsertHealthProfile,
-    type Medication, type HealthProfile
+    listTodayMedicationLogs, logMedicationStatus,
+    type Medication, type HealthProfile, type MedicationLog
 } from '../services/patientService';
 
 // ══════════════════════════════════════════════════════════════════════════════════
-//  SCREEN: PRESCRIÇÕES (Medications CRUD)
+//  SCREEN: PRESCRIÇÕES (Medications CRUD & Daily Adherence)
 // ══════════════════════════════════════════════════════════════════════════════════
 export const PrescricoesScreenLive: React.FC<{
     navigateTo: (s: string) => void;
     medications: Medication[]; setMedications: React.Dispatch<React.SetStateAction<Medication[]>>;
     patientId: string | null;
     mockPrescriptions: { id: string; med: string; dosage: string; doctor: string; date: string; active: boolean }[];
-}> = ({ navigateTo, medications, setMedications, patientId, mockPrescriptions }) => {
+    onAdherenceChange?: () => void;
+}> = ({ navigateTo, medications, setMedications, patientId, mockPrescriptions, onAdherenceChange }) => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [medName, setMedName] = useState('');
     const [medDosage, setMedDosage] = useState('');
-    const [medFrequency, setMedFrequency] = useState('');
+    const [schedules, setSchedules] = useState<string[]>(['08:00']);
+    const [newScheduleInput, setNewScheduleInput] = useState('');
     const [medDoctor, setMedDoctor] = useState('');
     const [medNotes, setMedNotes] = useState('');
     const [addError, setAddError] = useState('');
     const [isAdding, setIsAdding] = useState(false);
 
+    // Logs de tomada do dia
+    const [todayLogs, setTodayLogs] = useState<MedicationLog[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
+    const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
+    const loadLogs = async () => {
+        if (!patientId) return;
+        setLoadingLogs(true);
+        const logs = await listTodayMedicationLogs(patientId);
+        setTodayLogs(logs);
+        setLoadingLogs(false);
+    };
+
+    useEffect(() => {
+        loadLogs();
+    }, [patientId]);
+
     const handleAdd = async () => {
         if (!patientId) { setAddError('Faça login para adicionar.'); return; }
         if (!medName.trim()) { setAddError('Nome do medicamento é obrigatório.'); return; }
         if (!medDosage.trim()) { setAddError('Dosagem é obrigatória.'); return; }
-        if (!medFrequency.trim()) { setAddError('Frequência é obrigatória.'); return; }
+        if (schedules.length === 0) { setAddError('Defina ao menos um horário para a medicação.'); return; }
+        
         setIsAdding(true); setAddError('');
         const { data, error } = await addMedication({
-            patient_id: patientId, medication_name: medName.trim(), dosage: medDosage.trim(),
-            frequency: medFrequency.trim(), prescribing_doctor: medDoctor.trim() || null, notes: medNotes.trim() || null,
+            patient_id: patientId,
+            medication_name: medName.trim(),
+            dosage: medDosage.trim(),
+            schedules: schedules,
+            frequency: schedules.join(', '),
+            prescribing_doctor: medDoctor.trim() || null,
+            notes: medNotes.trim() || null,
         });
         setIsAdding(false);
         if (error) { setAddError(error); return; }
         if (data) {
             setMedications(prev => [data, ...prev]);
             setShowAddModal(false);
-            setMedName(''); setMedDosage(''); setMedFrequency(''); setMedDoctor(''); setMedNotes('');
+            setMedName(''); setMedDosage(''); setSchedules(['08:00']); setMedDoctor(''); setMedNotes('');
+            if (onAdherenceChange) onAdherenceChange();
         }
     };
 
@@ -56,76 +84,274 @@ export const PrescricoesScreenLive: React.FC<{
         if (ok) setMedications(prev => prev.filter(m => m.id !== id));
     };
 
+    const handleLogStatus = async (medicationId: string, scheduledTime: string, status: 'taken' | 'skipped') => {
+        if (!patientId) return;
+        const actionKey = `${medicationId}-${scheduledTime}`;
+        setActionInProgress(actionKey);
+        const { data } = await logMedicationStatus(patientId, medicationId, scheduledTime, status);
+        setActionInProgress(null);
+        if (data) {
+            setTodayLogs(prev => {
+                const filtered = prev.filter(l => !(l.medication_id === medicationId && l.scheduled_time === scheduledTime));
+                return [...filtered, data];
+            });
+            if (onAdherenceChange) onAdherenceChange();
+        }
+    };
+
+    const addScheduleChip = (time: string) => {
+        if (!time) return;
+        if (!schedules.includes(time)) {
+            setSchedules(prev => [...prev, time].sort());
+        }
+        setNewScheduleInput('');
+    };
+
+    const removeScheduleChip = (time: string) => {
+        setSchedules(prev => prev.filter(t => t !== time));
+    };
+
     const activeMeds = medications.filter(m => m.active);
     const inactiveMeds = medications.filter(m => !m.active);
     const hasMeds = medications.length > 0;
+
+    // Calcular doses do dia
+    interface ScheduledDose {
+        medId: string;
+        medName: string;
+        dosage: string;
+        time: string;
+        status: 'taken' | 'skipped' | 'pending';
+        takenAt?: string | null;
+    }
+
+    const todayDoses: ScheduledDose[] = [];
+    activeMeds.forEach(m => {
+        const times = m.schedules && m.schedules.length > 0 ? m.schedules : ['08:00'];
+        times.forEach(t => {
+            const log = todayLogs.find(l => l.medication_id === m.id && l.scheduled_time === t);
+            todayDoses.push({
+                medId: m.id,
+                medName: m.medication_name,
+                dosage: m.dosage,
+                time: t,
+                status: log ? log.status : 'pending',
+                takenAt: log?.taken_at,
+            });
+        });
+    });
+
+    todayDoses.sort((a, b) => a.time.localeCompare(b.time));
+
+    const totalScheduled = todayDoses.length;
+    const totalTaken = todayDoses.filter(d => d.status === 'taken').length;
+    const totalSkipped = todayDoses.filter(d => d.status === 'skipped').length;
+    const adherenceRate = totalScheduled > 0 ? Math.round((totalTaken / totalScheduled) * 100) : 100;
+
+    const commonPresets = ['06:00', '08:00', '12:00', '14:00', '18:00', '20:00', '22:00'];
     const iCls = "flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 focus-within:border-[#1D3461] focus-within:ring-1 focus-within:ring-[#1D3461]/20 transition-all";
     const fCls = "flex-1 bg-transparent text-sm text-slate-900 placeholder-slate-400 outline-none font-medium";
 
     return (
-        <div className="px-5 pt-12 pb-4">
-            <div className="flex items-center justify-between mb-6">
+        <div className="px-5 pt-12 pb-6 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigateTo('home')} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 transition"><ArrowLeft className="w-5 h-5 text-slate-800" /></button>
-                    <h1 className="text-lg font-bold text-slate-900">Minhas Prescrições</h1>
+                    <button onClick={() => navigateTo('home')} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 transition">
+                        <ArrowLeft className="w-5 h-5 text-slate-800" />
+                    </button>
+                    <div>
+                        <h1 className="text-lg font-bold text-slate-900">Prescrições & Adesão</h1>
+                        <p className="text-[10px] text-slate-500">Horários, lembretes e controle diário</p>
+                    </div>
                 </div>
-                <button onClick={() => setShowAddModal(true)} className="flex items-center gap-1.5 px-3 py-2 bg-[#1D3461] text-white rounded-xl text-xs font-bold active:scale-95 transition">
+                <button
+                    onClick={() => setShowAddModal(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-[#1D3461] hover:bg-[#162749] text-white rounded-xl text-xs font-bold active:scale-95 transition shadow-sm"
+                >
                     <Plus className="w-3.5 h-3.5" /> Adicionar
                 </button>
             </div>
 
+            {/* ═══ AGENDA DE HOJE & ADESÃO ═══ */}
+            {hasMeds && activeMeds.length > 0 && (
+                <div className="bg-gradient-to-br from-[#1D3461] to-[#0F172A] rounded-2xl p-4 text-white shadow-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <BellRing className="w-4 h-4 text-teal-400" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-teal-300">Doses de Hoje</span>
+                        </div>
+                        <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full font-bold">
+                            {totalTaken}/{totalScheduled} tomadas ({adherenceRate}%)
+                        </span>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                            className={`h-full transition-all duration-500 ${
+                                adherenceRate >= 80 ? 'bg-emerald-400' : adherenceRate >= 50 ? 'bg-amber-400' : 'bg-rose-400'
+                            }`}
+                            style={{ width: `${adherenceRate}%` }}
+                        />
+                    </div>
+
+                    {/* Doses list */}
+                    <div className="space-y-2 pt-1">
+                        {todayDoses.map((dose, idx) => {
+                            const actionKey = `${dose.medId}-${dose.time}`;
+                            const isBusy = actionInProgress === actionKey;
+
+                            return (
+                                <div
+                                    key={idx}
+                                    className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                                        dose.status === 'taken'
+                                            ? 'bg-emerald-500/15 border-emerald-400/30 text-white'
+                                            : dose.status === 'skipped'
+                                            ? 'bg-red-500/15 border-red-400/30 text-white/80'
+                                            : 'bg-white/10 border-white/10 text-white'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col items-center justify-center w-12 h-10 rounded-lg bg-black/30 text-teal-300 font-black text-xs">
+                                            <Clock className="w-3 h-3 mb-0.5 opacity-80" />
+                                            {dose.time}
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold leading-tight">{dose.medName}</p>
+                                            <p className="text-[10px] text-blue-200">{dose.dosage}</p>
+                                            {dose.status === 'taken' && (
+                                                <span className="text-[9px] text-emerald-300 font-semibold flex items-center gap-1 mt-0.5">
+                                                    <Check className="w-2.5 h-2.5" /> Tomado hoje
+                                                </span>
+                                            )}
+                                            {dose.status === 'skipped' && (
+                                                <span className="text-[9px] text-rose-300 font-semibold flex items-center gap-1 mt-0.5">
+                                                    <X className="w-2.5 h-2.5" /> Não tomado
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center gap-1.5">
+                                        {dose.status === 'pending' ? (
+                                            <>
+                                                <button
+                                                    onClick={() => handleLogStatus(dose.medId, dose.time, 'taken')}
+                                                    disabled={isBusy}
+                                                    className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[10px] font-bold active:scale-95 transition"
+                                                >
+                                                    {isBusy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                                    Tomei
+                                                </button>
+                                                <button
+                                                    onClick={() => handleLogStatus(dose.medId, dose.time, 'skipped')}
+                                                    disabled={isBusy}
+                                                    className="flex items-center gap-1 px-2 py-1.5 bg-white/10 hover:bg-white/20 text-slate-300 rounded-lg text-[10px] font-semibold active:scale-95 transition"
+                                                >
+                                                    Pular
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleLogStatus(dose.medId, dose.time, dose.status === 'taken' ? 'skipped' : 'taken')}
+                                                disabled={isBusy}
+                                                className="px-2 py-1 bg-white/10 hover:bg-white/20 text-[9px] font-semibold text-blue-200 rounded-lg transition"
+                                            >
+                                                Alterar
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* ═══ LISTA GERAL DE PRESCRIÇÕES ═══ */}
             {hasMeds ? (
                 <>
                     {activeMeds.length > 0 && (
-                        <>
-                            <h2 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Ativas ({activeMeds.length})</h2>
-                            <div className="space-y-3 mb-6">
+                        <div>
+                            <h2 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-1">
+                                <CheckCircle className="w-3.5 h-3.5" /> Medicamentos Ativos ({activeMeds.length})
+                            </h2>
+                            <div className="space-y-3">
                                 {activeMeds.map((rx) => (
                                     <div key={rx.id} className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center"><Pill className="w-5 h-5 text-emerald-600" /></div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-bold text-slate-900">{rx.medication_name}</p>
-                                                <p className="text-xs text-slate-500">{rx.dosage} · {rx.frequency}</p>
-                                                {rx.prescribing_doctor && <p className="text-[10px] text-slate-400 mt-0.5">{rx.prescribing_doctor}</p>}
+                                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                                                <Pill className="w-5 h-5 text-emerald-600" />
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                <button onClick={() => handleToggle(rx.id, rx.active)} className="p-1.5 rounded-lg hover:bg-slate-100"><ToggleRight className="w-4 h-4 text-emerald-500" /></button>
-                                                <button onClick={() => handleDelete(rx.id)} className="p-1.5 rounded-lg hover:bg-red-50"><Trash2 className="w-4 h-4 text-red-400" /></button>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-slate-900 truncate">{rx.medication_name}</p>
+                                                <p className="text-xs text-slate-500">{rx.dosage}</p>
+                                                
+                                                {/* Schedules chips */}
+                                                <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                                                    <span className="text-[9px] font-bold text-slate-400 mr-1">Horários:</span>
+                                                    {(rx.schedules || ['08:00']).map((time, i) => (
+                                                        <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-md text-[10px] font-bold">
+                                                            {time}
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                {rx.prescribing_doctor && (
+                                                    <p className="text-[10px] text-slate-400 mt-1">👨‍⚕️ {rx.prescribing_doctor}</p>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                <button onClick={() => handleToggle(rx.id, rx.active)} title="Desativar" className="p-1.5 rounded-lg hover:bg-slate-100">
+                                                    <ToggleRight className="w-5 h-5 text-emerald-500" />
+                                                </button>
+                                                <button onClick={() => handleDelete(rx.id)} title="Excluir" className="p-1.5 rounded-lg hover:bg-red-50">
+                                                    <Trash2 className="w-4 h-4 text-red-400" />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </>
+                        </div>
                     )}
+
                     {inactiveMeds.length > 0 && (
-                        <>
+                        <div>
                             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Encerradas ({inactiveMeds.length})</h2>
                             <div className="space-y-2.5">
                                 {inactiveMeds.map((rx) => (
                                     <div key={rx.id} className="bg-slate-50 rounded-2xl border border-slate-100 p-4 opacity-60">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex-1">
+                                            <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-semibold text-slate-600">{rx.medication_name}</p>
-                                                <p className="text-xs text-slate-400">{rx.dosage} · {rx.frequency}</p>
+                                                <p className="text-xs text-slate-400">{rx.dosage} · {(rx.schedules || []).join(', ')}</p>
                                             </div>
-                                            <button onClick={() => handleToggle(rx.id, rx.active)} className="p-1.5 rounded-lg hover:bg-slate-200"><ToggleLeft className="w-4 h-4 text-slate-400" /></button>
+                                            <button onClick={() => handleToggle(rx.id, rx.active)} title="Reativar" className="p-1.5 rounded-lg hover:bg-slate-200">
+                                                <ToggleLeft className="w-5 h-5 text-slate-400" />
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </>
+                        </div>
                     )}
                 </>
             ) : (
                 <>
-                    <h2 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5" /> Ativas</h2>
-                    <div className="space-y-3 mb-6">
+                    <h2 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-1">
+                        <CheckCircle className="w-3.5 h-3.5" /> Exemplos de Prescrições
+                    </h2>
+                    <div className="space-y-3 mb-4">
                         {mockPrescriptions.filter(p => p.active).map(rx => (
                             <div key={rx.id} className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-sm">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center"><Pill className="w-5 h-5 text-emerald-600" /></div>
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                                        <Pill className="w-5 h-5 text-emerald-600" />
+                                    </div>
                                     <div className="flex-1">
                                         <p className="text-sm font-bold text-slate-900">{rx.med}</p>
                                         <p className="text-xs text-slate-500">{rx.dosage}</p>
@@ -135,28 +361,145 @@ export const PrescricoesScreenLive: React.FC<{
                             </div>
                         ))}
                     </div>
-                    <p className="text-xs text-slate-400 text-center italic mb-4">Acima: dados de exemplo. Adicione seus medicamentos reais.</p>
+                    <p className="text-xs text-slate-400 text-center italic mb-4">Acima: dados demonstrativos. Toque em "Adicionar" para cadastrar seus remédios com horários reais.</p>
                 </>
             )}
 
+            {/* ═══ ADD MEDICATION MODAL (WITH SPECIFIC SCHEDULES) ═══ */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center" onClick={() => setShowAddModal(false)}>
-                    <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-8 space-y-3" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-2">
-                            <h2 className="text-base font-bold text-slate-900">Adicionar Medicação</h2>
-                            <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100"><XIcon className="w-5 h-5 text-slate-400" /></button>
+                    <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-8 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <Pill className="w-5 h-5 text-emerald-600" /> Adicionar Medicação
+                            </h2>
+                            <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100">
+                                <XIcon className="w-5 h-5 text-slate-400" />
+                            </button>
                         </div>
-                        {addError && <div className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-100 rounded-xl text-xs text-red-600"><AlertCircle className="w-3.5 h-3.5" />{addError}</div>}
-                        <div><label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Nome do Medicamento *</label><div className={iCls}><Pill className="w-4 h-4 text-slate-400" /><input type="text" value={medName} onChange={e => setMedName(e.target.value)} placeholder="Ex: Losartana 50mg" className={fCls} /></div></div>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div><label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Dosagem *</label><div className={iCls}><input type="text" value={medDosage} onChange={e => setMedDosage(e.target.value)} placeholder="1 comp/dia" className={fCls} /></div></div>
-                            <div><label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Frequência *</label><div className={iCls}><input type="text" value={medFrequency} onChange={e => setMedFrequency(e.target.value)} placeholder="Manhã" className={fCls} /></div></div>
+
+                        {addError && (
+                            <div className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-100 rounded-xl text-xs text-red-600">
+                                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                                {addError}
+                            </div>
+                        )}
+
+                        {/* Nome do Remédio */}
+                        <div>
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Nome do Medicamento *</label>
+                            <div className={iCls}>
+                                <Pill className="w-4 h-4 text-slate-400" />
+                                <input type="text" value={medName} onChange={e => setMedName(e.target.value)} placeholder="Ex: Losartana 50mg" className={fCls} />
+                            </div>
                         </div>
-                        <div><label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Médico Prescritor</label><div className={iCls}><Stethoscope className="w-4 h-4 text-slate-400" /><input type="text" value={medDoctor} onChange={e => setMedDoctor(e.target.value)} placeholder="Dr. Nome" className={fCls} /></div></div>
-                        <div><label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Observações</label><div className={iCls}><input type="text" value={medNotes} onChange={e => setMedNotes(e.target.value)} placeholder="Tomar com água" className={fCls} /></div></div>
-                        <button onClick={handleAdd} disabled={isAdding}
-                            className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2">
-                            {isAdding ? <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</> : <><Plus className="w-4 h-4" />Adicionar Medicação</>}
+
+                        {/* Dosagem */}
+                        <div>
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Dosagem / Instrução *</label>
+                            <div className={iCls}>
+                                <input type="text" value={medDosage} onChange={e => setMedDosage(e.target.value)} placeholder="Ex: 1 comprimido com água" className={fCls} />
+                            </div>
+                        </div>
+
+                        {/* 🕒 Horários Específicos */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-slate-700 uppercase block">
+                                🕒 Horários de Tomada *
+                            </label>
+                            <p className="text-[11px] text-slate-500">Defina os horários em que você deve tomar o medicamento:</p>
+
+                            {/* Chips de horários já adicionados */}
+                            <div className="flex items-center gap-1.5 flex-wrap min-h-[32px] p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                                {schedules.length === 0 ? (
+                                    <span className="text-xs text-slate-400 italic">Nenhum horário adicionado</span>
+                                ) : (
+                                    schedules.map((time) => (
+                                        <span key={time} className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#1D3461] text-white rounded-lg text-xs font-bold">
+                                            <Clock className="w-3 h-3 text-teal-300" />
+                                            {time}
+                                            <button
+                                                type="button"
+                                                onClick={() => removeScheduleChip(time)}
+                                                className="hover:text-red-300 ml-0.5"
+                                            >
+                                                ✕
+                                            </button>
+                                        </span>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Campo para digitar horário específico */}
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                                    <Clock className="w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="time"
+                                        value={newScheduleInput}
+                                        onChange={e => setNewScheduleInput(e.target.value)}
+                                        className="bg-transparent text-sm font-bold text-slate-800 outline-none w-full"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => addScheduleChip(newScheduleInput)}
+                                    disabled={!newScheduleInput}
+                                    className="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold disabled:opacity-50 transition"
+                                >
+                                    + Adicionar
+                                </button>
+                            </div>
+
+                            {/* Presets rápidos */}
+                            <div>
+                                <p className="text-[9px] font-semibold text-slate-400 uppercase mb-1">Horários rápidos:</p>
+                                <div className="flex gap-1.5 flex-wrap">
+                                    {commonPresets.map(preset => (
+                                        <button
+                                            key={preset}
+                                            type="button"
+                                            onClick={() => addScheduleChip(preset)}
+                                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition ${
+                                                schedules.includes(preset)
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-200 opacity-60'
+                                                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#1D3461]'
+                                            }`}
+                                        >
+                                            {preset}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Médico */}
+                        <div>
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Médico Prescritor (opcional)</label>
+                            <div className={iCls}>
+                                <Stethoscope className="w-4 h-4 text-slate-400" />
+                                <input type="text" value={medDoctor} onChange={e => setMedDoctor(e.target.value)} placeholder="Dr. Marcelo Ferreira" className={fCls} />
+                            </div>
+                        </div>
+
+                        {/* Observações */}
+                        <div>
+                            <label className="text-[10px] font-semibold text-slate-500 uppercase mb-1 block">Observações (opcional)</label>
+                            <div className={iCls}>
+                                <input type="text" value={medNotes} onChange={e => setMedNotes(e.target.value)} placeholder="Tomar preferencialmente em jejum" className={fCls} />
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleAdd}
+                            disabled={isAdding}
+                            className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl transition-all active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                        >
+                            {isAdding ? (
+                                <><Loader2 className="w-4 h-4 animate-spin" /> Salvando Medicação...</>
+                            ) : (
+                                <><Plus className="w-4 h-4" /> Salvar Medicamento</>
+                            )}
                         </button>
                     </div>
                 </div>

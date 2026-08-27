@@ -131,7 +131,7 @@ export function maskCPF(cpf: string): string {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════
-//  MEDICATIONS
+//  MEDICATIONS & ADHERENCE LOGS
 // ══════════════════════════════════════════════════════════════════════════════════
 
 export interface Medication {
@@ -139,7 +139,8 @@ export interface Medication {
     patient_id: string;
     medication_name: string;
     dosage: string;
-    frequency: string;
+    frequency?: string;
+    schedules: string[]; // Array of specific times, e.g. ['08:00', '20:00']
     prescribing_doctor: string | null;
     start_date: string | null;
     end_date: string | null;
@@ -149,10 +150,23 @@ export interface Medication {
     updated_at: string;
 }
 
-export type MedicationInsert = Pick<Medication, 'patient_id' | 'medication_name' | 'dosage' | 'frequency'> & {
+export type MedicationInsert = Pick<Medication, 'patient_id' | 'medication_name' | 'dosage'> & {
+    frequency?: string;
+    schedules?: string[];
     prescribing_doctor?: string | null;
     notes?: string | null;
 };
+
+export interface MedicationLog {
+    id: string;
+    patient_id: string;
+    medication_id: string;
+    scheduled_time: string;
+    taken_at: string | null;
+    status: 'taken' | 'skipped' | 'pending';
+    log_date: string;
+    created_at: string;
+}
 
 export async function listMedications(patientId: string): Promise<Medication[]> {
     const { data, error } = await supabasePatients
@@ -162,17 +176,29 @@ export async function listMedications(patientId: string): Promise<Medication[]> 
         .order('active', { ascending: false })
         .order('created_at', { ascending: false });
     if (error || !data) return [];
-    return data as Medication[];
+    return data.map((m: any) => ({
+        ...m,
+        schedules: Array.isArray(m.schedules) ? m.schedules : (m.frequency ? m.frequency.split(',').map((s: string) => s.trim()).filter(Boolean) : ['08:00']),
+    })) as Medication[];
 }
 
 export async function addMedication(med: MedicationInsert): Promise<{ data: Medication | null; error: string | null }> {
+    const payload = {
+        ...med,
+        schedules: med.schedules && med.schedules.length > 0 ? med.schedules : ['08:00'],
+        frequency: med.schedules && med.schedules.length > 0 ? med.schedules.join(', ') : (med.frequency || '08:00'),
+    };
     const { data, error } = await supabasePatients
         .from('patient_medications')
-        .insert(med)
+        .insert(payload)
         .select()
         .single();
     if (error) return { data: null, error: error.message };
-    return { data: data as Medication, error: null };
+    const saved = {
+        ...data,
+        schedules: Array.isArray(data.schedules) ? data.schedules : (data.frequency ? data.frequency.split(',').map((s: string) => s.trim()) : ['08:00']),
+    } as Medication;
+    return { data: saved, error: null };
 }
 
 export async function toggleMedication(id: string, active: boolean): Promise<boolean> {
@@ -189,6 +215,143 @@ export async function deleteMedication(id: string): Promise<boolean> {
         .delete()
         .eq('id', id);
     return !error;
+}
+
+// ── Medication Logs (Adherence) ──────────────────────────────────────────────────
+export async function listTodayMedicationLogs(patientId: string): Promise<MedicationLog[]> {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabasePatients
+        .from('patient_medication_logs')
+        .select('*')
+        .eq('patient_id', patientId)
+        .eq('log_date', today);
+    if (error || !data) return [];
+    return data as MedicationLog[];
+}
+
+export async function logMedicationStatus(
+    patientId: string,
+    medicationId: string,
+    scheduledTime: string,
+    status: 'taken' | 'skipped'
+): Promise<{ data: MedicationLog | null; error: string | null }> {
+    const today = new Date().toISOString().split('T')[0];
+    const takenAt = status === 'taken' ? new Date().toISOString() : null;
+
+    // Check if already logged today for this time
+    const { data: existing } = await supabasePatients
+        .from('patient_medication_logs')
+        .select('id')
+        .eq('patient_id', patientId)
+        .eq('medication_id', medicationId)
+        .eq('scheduled_time', scheduledTime)
+        .eq('log_date', today)
+        .maybeSingle();
+
+    if (existing) {
+        const { data, error } = await supabasePatients
+            .from('patient_medication_logs')
+            .update({ status, taken_at: takenAt })
+            .eq('id', existing.id)
+            .select()
+            .single();
+        if (error) return { data: null, error: error.message };
+        return { data: data as MedicationLog, error: null };
+    } else {
+        const { data, error } = await supabasePatients
+            .from('patient_medication_logs')
+            .insert({
+                patient_id: patientId,
+                medication_id: medicationId,
+                scheduled_time: scheduledTime,
+                status,
+                taken_at: takenAt,
+                log_date: today,
+            })
+            .select()
+            .single();
+        if (error) return { data: null, error: error.message };
+        return { data: data as MedicationLog, error: null };
+    }
+}
+
+export async function getMedicationAdherence(patientId: string): Promise<{
+    todayRate: number;
+    totalScheduledToday: number;
+    takenToday: number;
+    skippedToday: number;
+    pendingToday: number;
+}> {
+    const meds = await listMedications(patientId);
+    const activeMeds = meds.filter(m => m.active);
+    
+    let totalScheduledToday = 0;
+    for (const m of activeMeds) {
+        totalScheduledToday += (m.schedules?.length || 1);
+    }
+
+    const logs = await listTodayMedicationLogs(patientId);
+    const takenToday = logs.filter(l => l.status === 'taken').length;
+    const skippedToday = logs.filter(l => l.status === 'skipped').length;
+    const pendingToday = Math.max(0, totalScheduledToday - (takenToday + skippedToday));
+
+    const todayRate = totalScheduledToday > 0 ? Math.round((takenToday / totalScheduledToday) * 100) : 100;
+
+    return {
+        todayRate,
+        totalScheduledToday,
+        takenToday,
+        skippedToday,
+        pendingToday,
+    };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════
+//  VITAL SIGNS (Sinais Vitais)
+// ══════════════════════════════════════════════════════════════════════════════════
+
+export interface VitalSign {
+    id: string;
+    patient_id: string;
+    systolic_bp: number | null; // Pressão Sistólica (mmHg)
+    diastolic_bp: number | null; // Pressão Diastólica (mmHg)
+    heart_rate: number | null; // Frequência Cardíaca (bpm)
+    glucose: number | null; // Glicemia (mg/dL)
+    glucose_context: 'jejum' | 'pos_prandial' | 'casual' | null;
+    oxygen_saturation: number | null; // SpO2 (%)
+    temperature: number | null; // Temperatura (°C)
+    weight: number | null; // Peso (kg)
+    notes: string | null;
+    recorded_at: string;
+    created_at: string;
+}
+
+export type VitalSignInsert = Omit<VitalSign, 'id' | 'created_at'>;
+
+export async function addVitalSign(vital: VitalSignInsert): Promise<{ data: VitalSign | null; error: string | null }> {
+    const { data, error } = await supabasePatients
+        .from('patient_vitals')
+        .insert(vital)
+        .select()
+        .single();
+    if (error) return { data: null, error: error.message };
+    return { data: data as VitalSign, error: null };
+}
+
+export async function listVitalSigns(patientId: string, limit = 20): Promise<VitalSign[]> {
+    const { data, error } = await supabasePatients
+        .from('patient_vitals')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('recorded_at', { ascending: false })
+        .limit(limit);
+    if (error || !data) return [];
+    return data as VitalSign[];
+}
+
+export async function getLatestVitalSign(patientId: string): Promise<VitalSign | null> {
+    const list = await listVitalSigns(patientId, 1);
+    return list.length > 0 ? list[0] : null;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════
