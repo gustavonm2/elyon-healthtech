@@ -1,5 +1,6 @@
 import html2canvas from 'html2canvas';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { getInternalGeminiKey } from './geminiKey';
 
 export interface LizVisionAnalysisResult {
     success: boolean;
@@ -7,8 +8,7 @@ export interface LizVisionAnalysisResult {
     imageSnapshotUrl?: string;
 }
 
-const GEMINI_API_KEY =
-    import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_API_KEY = getInternalGeminiKey();
 
 /**
  * Captures active viewport snapshot using html2canvas or Canvas API

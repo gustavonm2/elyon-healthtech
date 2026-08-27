@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { dispatchLizOsCommand } from './lizOsBridgeService';
+import { getInternalGeminiKey } from './geminiKey';
 
 export interface LizBrainResponse {
     success: boolean;
@@ -8,8 +9,7 @@ export interface LizBrainResponse {
     toolDetails?: string;
 }
 
-const GEMINI_API_KEY =
-    import.meta.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_API_KEY = getInternalGeminiKey();
 
 /**
  * Direct Gemini 1.5 Integration with Native Function Calling

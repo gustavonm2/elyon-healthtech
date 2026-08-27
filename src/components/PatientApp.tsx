@@ -17,6 +17,7 @@ import {
     type Patient, type PatientInsert, type Medication, type MedicationInsert,
     type HealthProfile, type VitalSign, type MedicationLog
 } from '../services/patientService';
+import { getInternalGeminiKey } from '../services/geminiKey';
 import { PrescricoesScreenLive, TriagemSaudeScreen } from './PatientScreens';
 import { PatientCardScreen } from './PatientCardScreen';
 import { VitalsScreen } from './VitalsScreen';
@@ -199,7 +200,7 @@ export const PatientApp: React.FC = () => {
     const [lizResponse, setLizResponse] = useState('');
     const [conversation, setConversation] = useState<ConversationEntry[]>([]);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [apiKey, setApiKey] = useState('');
+    const [apiKey, setApiKey] = useState<string>(() => getInternalGeminiKey());
     const [showKeyInput, setShowKeyInput] = useState(false);
 
     // ── Proactive Analysis (Background LLM Check) ────────────────────────────
@@ -249,22 +250,24 @@ export const PatientApp: React.FC = () => {
 
     const navigateTo = (s: AppScreen) => { setScreen(s); setShowNotifications(false); };
 
-    // ── Background Proactive Analysis ────────────────────────────────────────
+    // ── Background Proactive Analysis (Executa na abertura e sempre que acessa Home ou LIZ) ─
     useEffect(() => {
-        if (!isLoggedIn || !apiKey.trim()) return;
+        if (!isLoggedIn) return;
+        const activeKey = apiKey.trim() || getInternalGeminiKey();
+        if (!activeKey) return;
 
         const runSilentLizAnalysis = async () => {
             try {
-                const analysisPrompt = `Você é a LIZ, coordenadora de cuidado do sistema ELYON. Analise os seguintes dados do paciente: ${JSON.stringify(clinicalContext)}. Sua tarefa: identifique se há pendências críticas (como exames não realizados, consultas muito próximas, ou medicamentos que precisam de atenção). Se houver, gere UMA frase acolhedora e proativa chamando o paciente pelo primeiro nome e sugerindo o próximo passo lógico para resolver a pendência. Seja breve e humana — a frase será exibida num banner de app mobile. Não use markdown ou asteriscos. Se tudo estiver perfeitamente em dia e sem pendências, retorne EXATAMENTE a palavra NONE.`;
+                const analysisPrompt = `Você é a LIZ, coordenadora de cuidado do sistema ELYON. Analise os seguintes dados clínicos em tempo real do paciente: ${JSON.stringify(clinicalContext)}. Sua tarefa: identifique se há pendências críticas (como exames não realizados, consultas muito próximas, adesão baixa a remédios, sinais vitais alterados). Se houver, gere UMA frase acolhedora e proativa chamando o paciente pelo primeiro nome e sugerindo o próximo passo lógico para resolver a pendência. Seja breve e humana — a frase será exibida num banner no app. Não use markdown ou asteriscos. Se tudo estiver em dia e sem pendências, retorne EXATAMENTE a palavra NONE.`;
 
                 const res = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${activeKey}`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             systemInstruction: { parts: [{ text: analysisPrompt }] },
-                            contents: [{ role: 'user', parts: [{ text: 'Analise agora os dados do paciente e me diga se há pendências.' }] }],
+                            contents: [{ role: 'user', parts: [{ text: 'Faça a varredura completa dos dados do paciente e verifique pendências e riscos.' }] }],
                         }),
                     }
                 );
@@ -275,9 +278,8 @@ export const PatientApp: React.FC = () => {
                 const text = data.candidates[0].content.parts[0].text.trim();
                 if (text && text.toUpperCase() !== 'NONE') {
                     setLizProactiveAlert(text);
-                    // Log proactive interaction
                     if (loggedPatient?.id) {
-                        logLizInteraction(loggedPatient.id, 'proactive', null, text, 'Alerta Proativo');
+                        logLizInteraction(loggedPatient.id, 'proactive', null, text, 'Varredura Proativa LIZ');
                     }
                 }
             } catch {
@@ -286,7 +288,7 @@ export const PatientApp: React.FC = () => {
         };
 
         runSilentLizAnalysis();
-    }, [isLoggedIn, apiKey]); // Runs when user logs in AND has API key
+    }, [isLoggedIn, screen]); // Executa ao logar e a cada troca de tela (Home, LIZ, etc.)
 
     // ── Splash auto-transition ───────────────────────────────────────────────
     useEffect(() => {
@@ -452,9 +454,10 @@ export const PatientApp: React.FC = () => {
             setConversation(updated);
             setTranscript(userText);
             try {
+                const activeKey = apiKey.trim() || getInternalGeminiKey();
                 const formatted = updated.map((m) => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
                 const res = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${activeKey}`,
                     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: systemPrompt }] }, contents: formatted }) }
                 );
                 if (!res.ok) { const err = await res.json(); throw new Error(err.error?.message || 'Erro na API.'); }
@@ -475,7 +478,6 @@ export const PatientApp: React.FC = () => {
     // ── STT ──────────────────────────────────────────────────────────────────
     const startListening = useCallback(() => {
         setErrorMessage(null);
-        if (!apiKey.trim()) { setErrorMessage('Cole sua chave Gemini no ícone 🔑 na tela da LIZ.'); navigateTo('liz'); setShowKeyInput(true); return; }
         const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         if (!SR) { setErrorMessage('Use o Google Chrome para reconhecimento de voz.'); return; }
         window.speechSynthesis.cancel();
@@ -492,7 +494,7 @@ export const PatientApp: React.FC = () => {
         rec.onend = () => { if (orbState === 'LISTENING') setOrbState('IDLE'); };
         recognitionRef.current = rec;
         rec.start();
-    }, [apiKey, orbState, queryGemini]);
+    }, [orbState, queryGemini]);
 
     const handleOrbClick = useCallback(() => {
         if (orbState === 'LISTENING') { recognitionRef.current?.stop(); setOrbState('IDLE'); return; }
@@ -502,12 +504,11 @@ export const PatientApp: React.FC = () => {
 
     const handleFabClick = useCallback(() => {
         if (orbState === 'IDLE') {
-            if (!apiKey.trim()) { navigateTo('liz'); setShowKeyInput(true); setErrorMessage('Cole sua chave Gemini para ativar a LIZ.'); return; }
             navigateTo('liz');
             setTimeout(() => startListening(), 300);
         } else if (orbState === 'LISTENING') { recognitionRef.current?.stop(); setOrbState('IDLE'); }
         else if (orbState === 'SPEAKING') { window.speechSynthesis.cancel(); setOrbState('IDLE'); }
-    }, [orbState, apiKey, startListening]);
+    }, [orbState, startListening]);
 
     // ── FAB config ───────────────────────────────────────────────────────────
     const fabConfig: Record<LizOrbState, { bg: string; icon: React.ReactNode; pulse: boolean }> = {

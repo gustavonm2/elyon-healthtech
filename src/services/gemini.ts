@@ -22,9 +22,11 @@ if (IN_BROWSER) {
    }
 }
 
-// Fallback para env var caso não venha da UI
-if (!apiKey && import.meta.env.VITE_GEMINI_API_KEY) {
-    apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+import { getInternalGeminiKey } from './geminiKey';
+
+// Fallback para internal default key
+if (!apiKey) {
+    apiKey = getInternalGeminiKey();
 }
 
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
