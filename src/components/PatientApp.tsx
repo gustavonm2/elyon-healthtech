@@ -6,7 +6,7 @@ import {
     MicOff, KeyRound, MessageSquare, Activity, Plus, Star, LogOut,
     Eye, EyeOff, Lock, Smartphone, ArrowRight, Sparkles, X as XIcon, UserPlus,
     Trash2, ToggleLeft, ToggleRight, ClipboardList, Brain, Dumbbell, Moon,
-    Coffee, Cigarette, Wine, HeartPulse, Siren
+    Coffee, Cigarette, Wine, HeartPulse, Siren, CreditCard
 } from 'lucide-react';
 import {
     loginPatient, registerPatient, calculateAge, formatCPF, maskCPF,
@@ -15,9 +15,10 @@ import {
     type Patient, type PatientInsert, type Medication, type MedicationInsert, type HealthProfile
 } from '../services/patientService';
 import { PrescricoesScreenLive, TriagemSaudeScreen } from './PatientScreens';
+import { PatientCardScreen } from './PatientCardScreen';
 
 // ── Types ────────────────────────────────────────────────────────────────────────
-type AppScreen = 'splash' | 'login' | 'register' | 'home' | 'consultas' | 'liz' | 'perfil' | 'prescricoes' | 'exames' | 'triagem';
+type AppScreen = 'splash' | 'login' | 'register' | 'home' | 'consultas' | 'liz' | 'perfil' | 'prescricoes' | 'exames' | 'triagem' | 'cartao';
 type LizOrbState = 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING';
 
 interface ConversationEntry {
@@ -405,6 +406,10 @@ export const PatientApp: React.FC = () => {
                             patientId={loggedPatient.id} patientName={patientDisplayData.name}
                             apiKey={apiKey} healthProfile={healthProfile}
                             setHealthProfile={setHealthProfile} />
+                    )}
+                    {screen === 'cartao' && loggedPatient && (
+                        <PatientCardScreen navigateTo={navigateTo}
+                            patient={loggedPatient} healthProfile={healthProfile} />
                     )}
                     {screen === 'liz' && (
                         <LizScreen orbState={orbState} transcript={transcript} lizResponse={lizResponse} conversation={conversation}
@@ -927,6 +932,7 @@ const HomeScreen: React.FC<{
                     { icon: Calendar, label: 'Consultas', color: 'bg-blue-50 text-blue-600 border-blue-100', action: () => navigateTo('consultas') },
                     { icon: Pill, label: 'Prescrições', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', action: () => navigateTo('prescricoes') },
                     { icon: FlaskConical, label: 'Exames', color: 'bg-purple-50 text-purple-600 border-purple-100', action: () => navigateTo('exames') },
+                    { icon: CreditCard, label: 'Cartão Saúde', color: 'bg-amber-50 text-amber-600 border-amber-100', action: () => navigateTo('cartao') },
                     { icon: Mic, label: 'Falar com LIZ', color: 'bg-cyan-50 text-cyan-600 border-cyan-100', action: onTalkToLiz, isMic: true },
                 ].map((item) => (
                     <button key={item.label} onClick={item.action}

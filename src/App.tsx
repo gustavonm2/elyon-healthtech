@@ -27,6 +27,7 @@ import LizPromptPlayground from './components/LizPromptPlayground';
 import LizVoiceInterface from './components/LizVoiceInterface';
 import PatientApp from './components/PatientApp';
 import LizInteractionsMonitor from './components/LizInteractionsMonitor';
+import { PublicHealthPage } from './components/PublicHealthPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
               <Route path="/liz-playground-full" element={<LizPromptPlayground />} />
               <Route path="/liz-voice-full" element={<LizVoiceInterface />} />
               <Route path="/app-paciente" element={<PatientApp />} />
+              <Route path="/saude/:patientId" element={<PublicHealthPage />} />
 
               {/* Protected Dashboard Routes with Sidebar */}
               <Route element={<Layout />}>
