@@ -18,6 +18,7 @@ import {
     type HealthProfile, type VitalSign, type MedicationLog
 } from '../services/patientService';
 import { getInternalGeminiKey } from '../services/geminiKey';
+import { generateLizSystemPrompt } from '../ai/LizBrain';
 import { PrescricoesScreenLive, TriagemSaudeScreen } from './PatientScreens';
 import { PatientCardScreen } from './PatientCardScreen';
 import { VitalsScreen } from './VitalsScreen';
@@ -140,29 +141,6 @@ function buildClinicalContext(
     };
 }
 
-function buildSystemPrompt(ctx: ClinicalContext): string {
-    return `Você é a LIZ, assistente de saúde inteligente e coordenadora de cuidado do sistema ELYON HealthTech.
-
-CONTEXTO CLÍNICO EM TEMPO REAL DO PACIENTE:
-Você está atendendo o paciente ${ctx.patientName}, ${ctx.patientAge} anos, tipo sanguíneo ${ctx.bloodType}.
-Os dados atuais do painel clínico dele são:
-- Próxima consulta: ${ctx.nextAppointment}
-- Medicamentos ativos (${ctx.activeMeds}): ${ctx.activeMedsList.join('; ')}
-- Adesão ao Tratamento Hoje: ${ctx.adherenceSummary}
-- Últimos Sinais Vitais: ${ctx.latestVitalsSummary}
-- Exames pendentes (${ctx.pendingExams}): ${ctx.pendingExamsList.join('; ')}
-- Resultados disponíveis: ${ctx.availableResults}
-- Queixas recentes: ${ctx.recentComplaints.join('; ')}
-
-REGRAS DE COMPORTAMENTO:
-1. Sempre cumprimente o paciente pelo primeiro nome.
-2. Monitore proativamente a adesão aos medicamentos: se o paciente esqueceu doses ou tem remédios pendentes, pergunte com empatia se ele precisa de ajuda ou se já tomou.
-3. Se os sinais vitais estiverem alterados (ex: pressão alta, glicose desregulada), recomende cautela e alerte o paciente.
-4. Responda de forma concisa e humanizada, como em uma conversa oral natural.
-5. Não use markdown, asteriscos ou formatação — sua resposta será lida em voz alta pela síntese de fala.
-6. Ao receber relatos de sintomas, oriente com segurança e recomende consulta médica.`;
-}
-
 // ── Helpers ──────────────────────────────────────────────────────────────────────
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     const cfg: Record<string, string> = {
@@ -243,7 +221,7 @@ export const PatientApp: React.FC = () => {
     } : PATIENT;
 
     const clinicalContext = buildClinicalContext(patientDisplayData, medications, adherenceStats, latestVitals, healthProfile);
-    const systemPrompt = buildSystemPrompt(clinicalContext);
+    const systemPrompt = generateLizSystemPrompt(clinicalContext);
 
     const unreadCount = notifications.filter((n) => !n.read).length;
     const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
