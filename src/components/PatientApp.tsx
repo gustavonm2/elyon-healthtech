@@ -501,10 +501,10 @@ export const PatientApp: React.FC = () => {
     const showAppChrome = isLoggedIn && screen !== 'splash' && screen !== 'login' && screen !== 'register';
 
     return (
-        <div className="h-screen w-full bg-[#F0F4F8] font-['Inter',sans-serif] flex justify-center">
-            <div className="w-full max-w-md h-full bg-white flex flex-col relative overflow-hidden shadow-2xl">
+        <div className="min-h-[100dvh] h-[100dvh] w-full bg-[#F0F4F8] font-['Inter',sans-serif] flex justify-center overflow-hidden select-none">
+            <div className="w-full sm:max-w-md h-full bg-white flex flex-col relative overflow-hidden shadow-2xl">
 
-                <div className="flex-1 overflow-y-auto" style={{ paddingBottom: showAppChrome ? 80 : 0 }}>
+                <div className="flex-1 overflow-y-auto overscroll-contain" style={{ paddingBottom: showAppChrome ? 96 : 0 }}>
                     {screen === 'splash' && <SplashScreen />}
                     {screen === 'login' && <LoginScreen onLogin={handleLogin} onGoToRegister={() => setScreen('register')} />}
                     {screen === 'register' && <RegisterScreen onBack={() => setScreen('login')} onRegisterSuccess={handleLogin} />}
@@ -554,9 +554,9 @@ export const PatientApp: React.FC = () => {
                     {screen === 'perfil' && <PerfilScreen patient={patientDisplayData} onLogout={handleLogout} />}
                 </div>
 
-                {/* Bottom Nav */}
+                {/* Bottom Nav — Mobile Optimized with Safe Area */}
                 {showAppChrome && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200/80 px-3 pt-2 pb-5 flex items-center justify-around z-40 shadow-xs">
+                    <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200/80 px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] flex items-center justify-around z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.03)]">
                         {([
                             { id: 'home' as AppScreen, icon: Home, label: 'Início' },
                             { id: 'consultas' as AppScreen, icon: Clock, label: 'Histórico' },
@@ -572,16 +572,17 @@ export const PatientApp: React.FC = () => {
                                         key={tab.id}
                                         onClick={() => navigateTo(tab.id)}
                                         className="-mt-5 flex flex-col items-center group focus:outline-none"
+                                        aria-label="Abrir LIZ"
                                     >
                                         <div className={`w-14 h-14 rounded-full flex flex-col items-center justify-center shadow-lg transition-all active:scale-95 ${
                                             isBusy
-                                                ? 'bg-emerald-600 text-white animate-pulse'
-                                                : 'bg-[#0A192F] text-white hover:bg-[#152544]'
+                                                ? 'bg-[#C0392B] text-white animate-pulse shadow-[#C0392B]/30'
+                                                : 'bg-[#1D3461] text-white hover:bg-[#162749] shadow-[#1D3461]/30'
                                         }`}>
                                             {isBusy && orbState === 'THINKING' ? (
-                                                <Loader2 className="w-5 h-5 animate-spin text-[#2DD4BF]" />
+                                                <Loader2 className="w-5 h-5 animate-spin text-white" />
                                             ) : (
-                                                <MessageSquare className="w-5 h-5 text-[#2DD4BF]" />
+                                                <MessageSquare className="w-5 h-5 text-white" />
                                             )}
                                             <span className="text-[9px] font-bold text-white tracking-wider mt-0.5">LIZ</span>
                                         </div>
@@ -593,11 +594,11 @@ export const PatientApp: React.FC = () => {
                                     key={tab.id}
                                     onClick={() => navigateTo(tab.id)}
                                     className={`flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all focus:outline-none ${
-                                        isActive ? 'text-[#0F172A]' : 'text-slate-400 hover:text-slate-600'
+                                        isActive ? 'text-[#1D3461]' : 'text-slate-400 hover:text-slate-600'
                                     }`}
                                 >
-                                    <tab.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5] text-[#0F172A]' : 'text-slate-400'}`} />
-                                    <span className={`text-[10px] ${isActive ? 'font-bold text-[#0F172A]' : 'font-medium text-slate-400'}`}>
+                                    <tab.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5] text-[#1D3461]' : 'text-slate-400'}`} />
+                                    <span className={`text-[10px] ${isActive ? 'font-bold text-[#1D3461]' : 'font-medium text-slate-400'}`}>
                                         {tab.label}
                                     </span>
                                 </button>
@@ -999,29 +1000,29 @@ const HomeScreen: React.FC<{
     const hasVitalsAlert = isBpHigh || isHrHigh;
 
     return (
-        <div className="bg-[#F8FAFC] min-h-full px-4 pt-8 pb-10 sm:px-5">
+        <div className="bg-[#F8FAFC] min-h-full px-4 pt-6 pb-8 sm:px-5">
             {/* ── 1. HEADER ── */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
                     <img
                         src="/elyon-logo.jpg"
                         alt="ELYON HEALTH"
-                        className="w-12 h-12 object-contain rounded-2xl border border-slate-100 shadow-xs"
+                        className="w-11 h-11 object-contain rounded-2xl border border-slate-100 shadow-xs"
                     />
                     <div>
-                        <h1 className="text-lg font-bold text-[#0F172A] leading-tight">Olá, {patient.name} 👋</h1>
+                        <h1 className="text-lg font-bold text-[#1D3461] leading-tight">Olá, {patient.name} 👋</h1>
                         <p className="text-xs text-slate-500 font-normal mt-0.5">Como está se sentindo hoje?</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowNotifications(!showNotifications)}
-                        className="relative w-11 h-11 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-center text-[#0F172A] transition shadow-xs"
+                        className="relative w-10 h-10 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-center text-[#1D3461] transition shadow-xs"
                         aria-label="Notificações"
                     >
-                        <Bell className="w-5 h-5 text-[#0F172A]" />
+                        <Bell className="w-5 h-5 text-[#1D3461]" />
                         {unreadCount > 0 && (
-                            <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+                            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-[#C0392B] rounded-full ring-2 ring-white animate-pulse" />
                         )}
                     </button>
                 </div>
@@ -1032,10 +1033,10 @@ const HomeScreen: React.FC<{
                 <div className="bg-white rounded-3xl p-4 mb-4 shadow-xl text-slate-800 animate-fadeIn border border-slate-200/80">
                     <div className="flex items-center justify-between mb-3 px-1">
                         <div className="flex items-center gap-2">
-                            <Bell className="w-4 h-4 text-[#0F172A]" />
-                            <h3 className="text-sm font-bold text-[#0F172A]">Notificações & Lembretes</h3>
+                            <Bell className="w-4 h-4 text-[#1D3461]" />
+                            <h3 className="text-sm font-bold text-[#1D3461]">Notificações & Lembretes</h3>
                         </div>
-                        <button onClick={markAllRead} className="text-[11px] font-semibold text-blue-600 hover:underline">
+                        <button onClick={markAllRead} className="text-[11px] font-semibold text-[#1D3461] hover:underline">
                             Marcar como lidas
                         </button>
                     </div>
@@ -1052,23 +1053,23 @@ const HomeScreen: React.FC<{
 
             {/* ── ⏰ LEMBRETE ATIVO DE MEDICAÇÃO (SE HOUVER DOSE PENDENTE) ── */}
             {activeMedReminder && (
-                <div className="mb-4 bg-white border border-teal-500/30 rounded-3xl p-4 shadow-xs">
+                <div className="mb-4 bg-white border border-[#C0392B]/30 rounded-3xl p-4 shadow-xs">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center flex-shrink-0">
-                            <Clock className="w-5 h-5 text-teal-600" />
+                        <div className="w-10 h-10 rounded-2xl bg-[#FDF2F2] flex items-center justify-center flex-shrink-0">
+                            <Clock className="w-5 h-5 text-[#C0392B]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <span className="text-[10px] font-bold tracking-wider uppercase text-teal-700">Hora do Medicamento ({activeMedReminder.time})</span>
-                            <p className="text-sm font-bold text-[#0F172A] leading-tight mt-0.5 truncate">{activeMedReminder.medName}</p>
+                            <span className="text-[10px] font-bold tracking-wider uppercase text-[#C0392B]">Hora do Medicamento ({activeMedReminder.time})</span>
+                            <p className="text-sm font-bold text-[#1D3461] leading-tight mt-0.5 truncate">{activeMedReminder.medName}</p>
                             <p className="text-xs text-slate-500">{activeMedReminder.dosage}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100">
                         <button
                             onClick={() => onTakeReminder(activeMedReminder.medId, activeMedReminder.time)}
-                            className="flex-1 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2.5 bg-[#1D3461] hover:bg-[#162749] text-white rounded-xl text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1.5"
                         >
-                            <CheckCircle className="w-3.5 h-3.5 text-teal-400" /> Já Tomei
+                            <CheckCircle className="w-3.5 h-3.5 text-white" /> Já Tomei
                         </button>
                         <button
                             onClick={() => onSkipReminder(activeMedReminder.medId, activeMedReminder.time)}
@@ -1084,26 +1085,27 @@ const HomeScreen: React.FC<{
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] mb-5">
                 {/* Header do Card */}
                 <div className="flex items-start gap-3.5 mb-4">
-                    {/* Avatar LIZ */}
+                    {/* Avatar LIZ com Logo Oficial */}
                     <div className="relative flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-[#0A192F] flex items-center justify-center shadow-xs">
-                            <Sparkles className="w-6 h-6 text-[#2DD4BF]" />
-                        </div>
-                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+                        <img
+                            src="/elyon-logo.jpg"
+                            alt="LIZ Elyon"
+                            className="w-12 h-12 rounded-2xl object-contain bg-white border border-slate-100 shadow-xs"
+                        />
                     </div>
 
                     {/* Textos LIZ */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider flex items-center gap-1">
-                                <Shield className="w-3.5 h-3.5 text-teal-600 inline" />
+                            <span className="text-[11px] font-bold text-[#C0392B] uppercase tracking-wider flex items-center gap-1">
+                                <Shield className="w-3.5 h-3.5 text-[#C0392B] inline" />
                                 LIZ • CUIDADO PROATIVO
                             </span>
                             <button onClick={onTalkToLiz} className="text-slate-400 hover:text-slate-600 transition p-1 -mr-1">
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
-                        <h2 className="text-sm sm:text-base font-bold text-[#0F172A] mt-1 leading-snug">
+                        <h2 className="text-sm sm:text-base font-bold text-[#1D3461] mt-1 leading-snug">
                             {hasVitalsAlert
                                 ? 'Seus sinais vitais precisam de atenção'
                                 : (lizProactiveAlert || 'Seu plano de cuidado está em dia')}
@@ -1126,13 +1128,13 @@ const HomeScreen: React.FC<{
                         <div className="min-w-0 flex-1">
                             <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider truncate">PRESSÃO ARTERIAL</p>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                <span className="text-xs font-bold text-[#0F172A] truncate">
+                                <span className="text-xs font-bold text-[#1D3461] truncate">
                                     {bpSystolic}/{bpDiastolic} mmHg
                                 </span>
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase leading-none ${
                                     isBpHigh
-                                        ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                        ? 'bg-[#FDF2F2] text-[#C0392B] border border-[#FCA5A5]/70'
+                                        : 'bg-slate-100 text-[#1D3461] border border-slate-200'
                                 }`}>
                                     {isBpHigh ? 'ALTO' : 'NORMAL'}
                                 </span>
@@ -1148,13 +1150,13 @@ const HomeScreen: React.FC<{
                         <div className="min-w-0 flex-1">
                             <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider truncate">FREQUÊNCIA CARDÍACA</p>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                <span className="text-xs font-bold text-[#0F172A] truncate">
+                                <span className="text-xs font-bold text-[#1D3461] truncate">
                                     {heartRate} bpm
                                 </span>
                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase leading-none ${
                                     isHrHigh
-                                        ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                        ? 'bg-[#FDF2F2] text-[#C0392B] border border-[#FCA5A5]/70'
+                                        : 'bg-slate-100 text-[#1D3461] border border-slate-200'
                                 }`}>
                                     {isHrHigh ? 'ALTO' : 'NORMAL'}
                                 </span>
@@ -1163,19 +1165,19 @@ const HomeScreen: React.FC<{
                     </div>
                 </div>
 
-                {/* Botão Principal: Conversar com a LIZ */}
+                {/* Botão Principal: Conversar com a LIZ (Azul Institucional) */}
                 <button
                     onClick={onTalkToLiz}
-                    className="w-full py-3.5 bg-[#0A192F] hover:bg-[#1E293B] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.99]"
+                    className="w-full py-3.5 bg-[#1D3461] hover:bg-[#162749] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition active:scale-[0.99]"
                 >
-                    <MessageSquare className="w-4 h-4 text-[#2DD4BF]" />
+                    <MessageSquare className="w-4 h-4 text-white" />
                     Conversar com a LIZ
                 </button>
             </div>
 
             {/* ── 3. ACESSO RÁPIDO (6 BOTÕES RIGOROSAMENTE PADRONIZADOS) ── */}
             <div className="mb-6">
-                <h2 className="text-sm font-bold text-[#0F172A] mb-3">Acesso rápido</h2>
+                <h2 className="text-sm font-bold text-[#1D3461] mb-3">Acesso rápido</h2>
                 <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
                     {[
                         { id: 'consultas', label: 'Consultas', icon: Calendar, action: () => navigateTo('consultas') },
@@ -1190,8 +1192,8 @@ const HomeScreen: React.FC<{
                             onClick={item.action}
                             className="bg-white border border-slate-200/80 hover:border-slate-300 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center justify-center gap-2.5 text-center shadow-xs transition active:scale-95 group"
                         >
-                            <item.icon className="w-6 h-6 text-[#0F172A] stroke-[1.75] group-hover:scale-105 transition-transform" />
-                            <span className="text-xs font-semibold text-[#0F172A] leading-tight">{item.label}</span>
+                            <item.icon className="w-6 h-6 text-[#1D3461] stroke-[1.75] group-hover:scale-105 transition-transform" />
+                            <span className="text-xs font-semibold text-[#1D3461] leading-tight">{item.label}</span>
                         </button>
                     ))}
                 </div>
@@ -1199,14 +1201,14 @@ const HomeScreen: React.FC<{
 
             {/* ── 4. RESUMO DE SAÚDE (CONTAINER ÚNICO BRANCO COM LISTA) ── */}
             <div className="mb-6">
-                <h2 className="text-sm font-bold text-[#0F172A] mb-3">Resumo de saúde</h2>
+                <h2 className="text-sm font-bold text-[#1D3461] mb-3">Resumo de saúde</h2>
                 <div className="bg-white rounded-3xl border border-slate-200/80 divide-y divide-slate-100 shadow-xs overflow-hidden">
                     {/* Item 1: Adesão Medicamentosa */}
                     <button
                         onClick={() => navigateTo('prescricoes')}
                         className="w-full p-4 flex items-center gap-3.5 hover:bg-slate-50/70 transition text-left group"
                     >
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-2xl bg-[#FDF2F2] text-[#C0392B] flex items-center justify-center flex-shrink-0">
                             <Pill className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1218,7 +1220,7 @@ const HomeScreen: React.FC<{
                             </p>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                            <span className="bg-[#FDF2F2] text-[#C0392B] border border-[#FCA5A5]/60 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
                                 EM DIA
                             </span>
                             <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition" />
@@ -1230,7 +1232,7 @@ const HomeScreen: React.FC<{
                         onClick={() => navigateTo('sinais-vitais')}
                         className="w-full p-4 flex items-center gap-3.5 hover:bg-slate-50/70 transition text-left group"
                     >
-                        <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-2xl bg-[#FDF2F2] text-[#C0392B] flex items-center justify-center flex-shrink-0">
                             <Activity className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1242,8 +1244,8 @@ const HomeScreen: React.FC<{
                         <div className="flex items-center gap-2 flex-shrink-0">
                             <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
                                 hasVitalsAlert
-                                    ? 'bg-rose-50 text-rose-600 border border-rose-200'
-                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    ? 'bg-[#FDF2F2] text-[#C0392B] border border-[#FCA5A5]/70'
+                                    : 'bg-slate-100 text-[#1D3461] border border-slate-200'
                             }`}>
                                 {hasVitalsAlert ? 'ATENÇÃO' : 'NORMAL'}
                             </span>
@@ -1253,7 +1255,7 @@ const HomeScreen: React.FC<{
 
                     {/* Item 3: Tipo Sanguíneo */}
                     <div className="w-full p-4 flex items-center gap-3.5 text-left">
-                        <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#1D3461] flex items-center justify-center flex-shrink-0">
                             <Droplets className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1268,7 +1270,7 @@ const HomeScreen: React.FC<{
                         onClick={() => navigateTo('consultas')}
                         className="w-full p-4 flex items-center gap-3.5 hover:bg-slate-50/70 transition text-left group"
                     >
-                        <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#0F172A] flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#1D3461] flex items-center justify-center flex-shrink-0">
                             <Calendar className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1291,12 +1293,12 @@ const HomeScreen: React.FC<{
                 className="w-full p-4 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-slate-300 transition flex items-center gap-3.5 text-left"
             >
                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
-                    healthProfile?.triage_completed ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-[#0F172A]'
+                    healthProfile?.triage_completed ? 'bg-[#FDF2F2] text-[#C0392B]' : 'bg-slate-100 text-[#1D3461]'
                 }`}>
                     {healthProfile?.triage_completed ? <CheckCircle className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-[#0F172A]">
+                    <p className="text-xs font-bold text-[#1D3461]">
                         {healthProfile?.triage_completed ? 'Perfil de Saúde Completo' : 'Completar Triagem de Saúde'}
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5">
