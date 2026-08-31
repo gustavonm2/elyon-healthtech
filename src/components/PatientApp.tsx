@@ -623,36 +623,81 @@ export const PatientApp: React.FC = () => {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════════
-//  SCREEN: SPLASH
+//  SCREEN: SPLASH (ANIMAÇÃO CINEMATOGRÁFICA HEALTH TECH)
 // ══════════════════════════════════════════════════════════════════════════════════
-const SplashScreen: React.FC = () => (
-    <div className="h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#0F172A] via-[#1D3461] to-[#0F172A] relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 left-1/2 -translate-x-1/2 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+const SplashScreen: React.FC = () => {
+    const [progress, setProgress] = useState(15);
+    const [phaseText, setPhaseText] = useState('Iniciando Inteligência LIZ...');
 
-        {/* Logo */}
-        <div className="relative z-10 flex flex-col items-center animate-fadeIn">
-            <img
-                src="/elyon-logo.jpg"
-                alt="Elyon HealthTech"
-                className="w-32 h-32 object-contain rounded-3xl shadow-2xl shadow-blue-500/20 mb-6"
-            />
-            <h1 className="text-3xl font-bold text-white tracking-wider mb-1">ELYON</h1>
-            <p className="text-xs text-blue-300 tracking-[0.3em] font-semibold uppercase">Conecta. Coordena. Eleva.</p>
-        </div>
+    useEffect(() => {
+        const t1 = setTimeout(() => { setProgress(55); setPhaseText('Sincronizando protocolos clínicos...'); }, 700);
+        const t2 = setTimeout(() => { setProgress(90); setPhaseText('Calibrando cuidado personalizado...'); }, 1400);
+        const t3 = setTimeout(() => { setProgress(100); setPhaseText('Bem-vindo à ELYON Health'); }, 2000);
+        return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }, []);
 
-        {/* Loading indicator */}
-        <div className="absolute bottom-20 flex flex-col items-center gap-3">
-            <div className="flex gap-1.5">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+    return (
+        <div className="h-full flex flex-col items-center justify-between py-12 px-6 bg-gradient-to-b from-[#0F172A] via-[#1D3461] to-[#0A1120] relative overflow-hidden select-none">
+            {/* Holographic glowing backgrounds */}
+            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#1D3461]/40 rounded-full blur-[100px] pointer-events-none animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#C0392B]/15 rounded-full blur-[90px] pointer-events-none" />
+            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+
+            {/* Top Badge */}
+            <div className="relative z-10 pt-4 animate-fadeIn">
+                <span className="text-[10px] font-bold tracking-[0.35em] text-blue-200/70 uppercase px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                    ELYON HEALTHTECH
+                </span>
             </div>
-            <p className="text-[10px] text-blue-400/60 font-medium">Carregando sua experiência de saúde...</p>
+
+            {/* Center: Logo with Multi-layer Pulse Radar & Shimmer */}
+            <div className="relative z-10 flex flex-col items-center my-auto">
+                <div className="relative flex items-center justify-center mb-7">
+                    {/* Concentric expanding pulse rings */}
+                    <div className="absolute w-44 h-44 rounded-full border border-blue-400/20 animate-ping opacity-25" style={{ animationDuration: '3s' }} />
+                    <div className="absolute w-36 h-36 rounded-full border border-[#C0392B]/30 animate-pulse opacity-40" />
+                    <div className="absolute w-32 h-32 rounded-3xl bg-blue-500/20 blur-xl animate-pulse" />
+
+                    {/* Logo Box with Soft 3D Glow */}
+                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl p-1 bg-gradient-to-b from-white/20 via-white/5 to-white/0 border border-white/20 shadow-[0_0_50px_rgba(29,52,97,0.8)] backdrop-blur-md overflow-hidden transform hover:scale-105 transition-transform duration-500">
+                        <img
+                            src="/elyon-logo.jpg"
+                            alt="Elyon Health"
+                            className="w-full h-full object-contain rounded-[22px] shadow-inner"
+                        />
+                        {/* Diagonal light beam sweep */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer pointer-events-none" />
+                    </div>
+                </div>
+
+                {/* Typography */}
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-[0.2em] leading-none text-center drop-shadow-md">
+                    ELYON
+                </h1>
+                <p className="text-xs font-bold text-blue-200/90 tracking-[0.25em] uppercase mt-2 text-center">
+                    CUIDADO INTEGRADO & INTELIGENTE
+                </p>
+                <p className="text-[11px] text-slate-400 font-medium tracking-wider mt-1 text-center">
+                    Conecta. Coordena. Eleva.
+                </p>
+            </div>
+
+            {/* Bottom: Modern High-tech Progress Bar */}
+            <div className="relative z-10 w-full max-w-xs flex flex-col items-center gap-2.5 pb-2">
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[1px] border border-white/10">
+                    <div
+                        className="h-full bg-gradient-to-r from-[#C0392B] via-blue-400 to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_12px_rgba(192,57,43,0.8)]"
+                        style={{ width: `${progress}%` }}
+                    />
+                </div>
+                <div className="flex items-center justify-between w-full text-[10px] text-blue-200/80 font-medium px-0.5">
+                    <span className="truncate">{phaseText}</span>
+                    <span className="font-mono text-slate-400">{progress}%</span>
+                </div>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 // ══════════════════════════════════════════════════════════════════════════════════
 //  SCREEN: LOGIN
