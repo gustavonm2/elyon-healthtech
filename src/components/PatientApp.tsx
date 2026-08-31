@@ -6,10 +6,10 @@ import {
     MicOff, KeyRound, MessageSquare, Activity, Plus, Star, LogOut,
     Eye, EyeOff, Lock, Smartphone, ArrowRight, Sparkles, X as XIcon, UserPlus,
     Trash2, ToggleLeft, ToggleRight, ClipboardList, Brain, Dumbbell, Moon,
-    Coffee, Cigarette, Wine, HeartPulse, Siren, CreditCard
+    Coffee, Cigarette, Wine, HeartPulse, Siren, CreditCard, Camera, Upload
 } from 'lucide-react';
 import {
-    loginPatient, registerPatient, calculateAge, formatCPF, maskCPF,
+    loginPatient, registerPatient, updatePatient, calculateAge, formatCPF, maskCPF,
     listMedications, addMedication, toggleMedication, deleteMedication,
     getHealthProfile, upsertHealthProfile, logLizInteraction,
     listTodayMedicationLogs, logMedicationStatus, getMedicationAdherence,
@@ -217,7 +217,7 @@ export const PatientApp: React.FC = () => {
         email: loggedPatient.email || 'Não informado',
         city: `${loggedPatient.city || 'Não informada'}${loggedPatient.state ? ` - ${loggedPatient.state}` : ''}`,
         bloodType: loggedPatient.blood_type || 'Não informado',
-        avatar: null as string | null,
+        avatar: loggedPatient.avatar_url || null,
     } : PATIENT;
 
     const clinicalContext = buildClinicalContext(patientDisplayData, medications, adherenceStats, latestVitals, healthProfile);
@@ -551,7 +551,18 @@ export const PatientApp: React.FC = () => {
                             setShowKeyInput={setShowKeyInput} handleOrbClick={handleOrbClick} conversationEndRef={conversationEndRef}
                             clinicalContext={clinicalContext} />
                     )}
-                    {screen === 'perfil' && <PerfilScreen patient={patientDisplayData} onLogout={handleLogout} />}
+                    {screen === 'perfil' && (
+                        <PerfilScreen
+                            patient={patientDisplayData}
+                            loggedPatient={loggedPatient}
+                            onAvatarUpdated={(url) => {
+                                if (loggedPatient) {
+                                    setLoggedPatient({ ...loggedPatient, avatar_url: url });
+                                }
+                            }}
+                            onLogout={handleLogout}
+                        />
+                    )}
                 </div>
 
                 {/* Bottom Nav — Mobile Optimized with Safe Area */}
@@ -1004,11 +1015,26 @@ const HomeScreen: React.FC<{
             {/* ── 1. HEADER ── */}
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <img
-                        src="/elyon-logo.jpg"
-                        alt="ELYON HEALTH"
-                        className="w-11 h-11 object-contain rounded-2xl border border-slate-100 shadow-xs"
-                    />
+                    <button
+                        onClick={() => navigateTo('perfil')}
+                        className="relative w-12 h-12 rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs flex-shrink-0 bg-white group focus:outline-none transition active:scale-95 text-left"
+                        title="Ver / alterar foto de perfil"
+                    >
+                        {patient.avatar ? (
+                            <img
+                                src={patient.avatar}
+                                alt={patient.name}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-[#1D3461] flex items-center justify-center text-white font-bold text-sm">
+                                {patient.initials || 'EG'}
+                            </div>
+                        )}
+                        <span className="absolute bottom-0 right-0 w-4 h-4 bg-[#C0392B] rounded-full border-2 border-white flex items-center justify-center shadow-2xs">
+                            <Camera className="w-2.5 h-2.5 text-white" />
+                        </span>
+                    </button>
                     <div>
                         <h1 className="text-lg font-bold text-[#1D3461] leading-tight">Olá, {patient.name} 👋</h1>
                         <p className="text-xs text-slate-500 font-normal mt-0.5">Como está se sentindo hoje?</p>
@@ -1469,38 +1495,185 @@ const LizScreen: React.FC<{
 // ══════════════════════════════════════════════════════════════════════════════════
 //  SCREEN: PERFIL
 // ══════════════════════════════════════════════════════════════════════════════════
-const PerfilScreen: React.FC<{ patient: typeof PATIENT; onLogout: () => void }> = ({ patient, onLogout }) => (
-    <div className="px-5 pt-12 pb-4">
-        <div className="flex flex-col items-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-[#1D3461] flex items-center justify-center text-2xl font-bold text-white mb-3 shadow-lg">{patient.initials}</div>
-            <h1 className="text-lg font-bold text-slate-900">{patient.fullName}</h1>
-            <p className="text-xs text-slate-500">Paciente ELYON</p>
-        </div>
-        <div className="space-y-3">
-            {[
-                { icon: Calendar, label: 'Data de Nascimento', value: `${patient.birthDate} (${patient.age} anos)` },
-                { icon: Phone, label: 'Telefone', value: patient.phone },
-                { icon: Mail, label: 'E-mail', value: patient.email },
-                { icon: MapPin, label: 'Cidade', value: patient.city },
-                { icon: Droplets, label: 'Tipo Sanguíneo', value: patient.bloodType },
-                { icon: Shield, label: 'CPF', value: patient.cpf },
-            ].map((item) => (
-                <div key={item.label} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center"><item.icon className="w-5 h-5 text-[#1D3461]" /></div>
-                    <div><p className="text-[10px] text-slate-400 font-semibold uppercase">{item.label}</p><p className="text-sm font-semibold text-slate-900">{item.value}</p></div>
+const PerfilScreen: React.FC<{
+    patient: typeof PATIENT;
+    loggedPatient: Patient | null;
+    onAvatarUpdated: (url: string | null) => void;
+    onLogout: () => void;
+}> = ({ patient, loggedPatient, onAvatarUpdated, onLogout }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsSaving(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = async () => {
+                    // Redimensiona para max 320px para armazenamento otimizado no Supabase
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 320;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > maxDim) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        }
+                    } else {
+                        if (height > maxDim) {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx?.drawImage(img, 0, 0, width, height);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+                    if (loggedPatient?.id) {
+                        await updatePatient(loggedPatient.id, { avatar_url: compressedBase64 });
+                    }
+                    onAvatarUpdated(compressedBase64);
+                    setIsSaving(false);
+                    setSuccessMessage('Foto de perfil salva com sucesso!');
+                    setTimeout(() => setSuccessMessage(null), 3000);
+                };
+                img.src = event.target?.result as string;
+            };
+            reader.readAsDataURL(file);
+        } catch (err) {
+            console.error('Erro ao processar imagem:', err);
+            setIsSaving(false);
+        }
+    };
+
+    const handleRemovePhoto = async () => {
+        if (loggedPatient?.id) {
+            setIsSaving(true);
+            await updatePatient(loggedPatient.id, { avatar_url: null });
+            setIsSaving(false);
+        }
+        onAvatarUpdated(null);
+        setSuccessMessage('Foto removida!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+    };
+
+    return (
+        <div className="px-5 pt-10 pb-8">
+            <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+            />
+
+            <div className="flex flex-col items-center mb-6">
+                <div className="relative group">
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isSaving}
+                        className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-slate-200 shadow-md flex items-center justify-center bg-white relative group focus:outline-none transition active:scale-95 text-left"
+                    >
+                        {patient.avatar ? (
+                            <img
+                                src={patient.avatar}
+                                alt={patient.fullName}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div className="w-full h-full bg-[#1D3461] flex items-center justify-center text-3xl font-bold text-white">
+                                {patient.initials}
+                            </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-3xl">
+                            <Camera className="w-7 h-7 text-white" />
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isSaving}
+                        className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#1D3461] text-white flex items-center justify-center border-2 border-white shadow-md hover:bg-[#162749] transition active:scale-90"
+                        title="Escolher Foto"
+                    >
+                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                    </button>
                 </div>
-            ))}
+
+                <h1 className="text-lg font-bold text-[#1D3461] mt-3 leading-tight">{patient.fullName}</h1>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Paciente ELYON Health</p>
+
+                <div className="flex items-center gap-2 mt-3">
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isSaving}
+                        className="text-[11px] font-bold text-[#1D3461] bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full transition flex items-center gap-1.5 shadow-2xs"
+                    >
+                        <Upload className="w-3 h-3" />
+                        {patient.avatar ? 'Alterar foto' : 'Escolher foto'}
+                    </button>
+                    {patient.avatar && (
+                        <button
+                            onClick={handleRemovePhoto}
+                            disabled={isSaving}
+                            className="text-[11px] font-semibold text-[#C0392B] bg-[#FDF2F2] hover:bg-red-100 px-3 py-1.5 rounded-full transition"
+                        >
+                            Remover
+                        </button>
+                    )}
+                </div>
+
+                {successMessage && (
+                    <div className="mt-3 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-200 shadow-2xs animate-fadeIn flex items-center gap-1.5">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        {successMessage}
+                    </div>
+                )}
+            </div>
+
+            <div className="space-y-2.5 mb-6">
+                {[
+                    { icon: Calendar, label: 'Data de Nascimento', value: `${patient.birthDate} (${patient.age} anos)` },
+                    { icon: Phone, label: 'Telefone', value: patient.phone },
+                    { icon: Mail, label: 'E-mail', value: patient.email },
+                    { icon: MapPin, label: 'Cidade', value: patient.city },
+                    { icon: Droplets, label: 'Tipo Sanguíneo', value: patient.bloodType },
+                    { icon: Shield, label: 'CPF', value: patient.cpf },
+                ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-3 p-3.5 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                            <item.icon className="w-4 h-4 text-[#1D3461]" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">{item.label}</p>
+                            <p className="text-xs sm:text-sm font-semibold text-[#1D3461] truncate">{item.value}</p>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <button
+                onClick={onLogout}
+                className="w-full py-3.5 bg-[#FDF2F2] hover:bg-red-100 text-[#C0392B] font-bold text-sm rounded-2xl border border-[#FCA5A5]/60 flex items-center justify-center gap-2 active:scale-95 transition shadow-xs"
+            >
+                <LogOut className="w-4 h-4" />
+                Sair da Conta
+            </button>
+
+            <div className="flex items-center justify-center gap-2 mt-4 text-[10px] text-slate-300">
+                <ElyonLogo size="sm" />
+                <span className="font-semibold text-slate-400">ELYON HealthTech v1.0</span>
+            </div>
         </div>
-        <button onClick={onLogout}
-            className="w-full mt-6 py-3 bg-red-50 text-red-600 font-bold text-sm rounded-2xl border border-red-100 flex items-center justify-center gap-2 active:scale-95 transition">
-            <LogOut className="w-4 h-4" />
-            Sair da Conta
-        </button>
-        <div className="flex items-center justify-center gap-2 mt-4 text-[10px] text-slate-300">
-            <ElyonLogo size="sm" />
-            <span className="font-semibold text-slate-400">ELYON HealthTech v1.0</span>
-        </div>
-    </div>
-);
+    );
+};
 
 export default PatientApp;

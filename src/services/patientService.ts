@@ -18,6 +18,7 @@ export interface Patient {
     chronic_conditions: string[];
     emergency_contact_name: string | null;
     emergency_contact_phone: string | null;
+    avatar_url?: string | null;
     password: string;
     status: 'ativo' | 'inativo' | 'suspenso';
     created_at: string;
