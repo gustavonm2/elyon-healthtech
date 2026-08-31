@@ -554,48 +554,52 @@ export const PatientApp: React.FC = () => {
                     {screen === 'perfil' && <PerfilScreen patient={patientDisplayData} onLogout={handleLogout} />}
                 </div>
 
-                {/* FAB */}
-                {showAppChrome && screen !== 'liz' && (
-                    <button onClick={handleFabClick}
-                        className={`absolute bottom-24 right-4 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-90 ${fab.bg} ${fab.pulse ? 'animate-pulse' : ''}`}>
-                        {fab.icon}
-                        {orbState !== 'IDLE' && <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 animate-ping" />}
-                    </button>
-                )}
-
                 {/* Bottom Nav */}
                 {showAppChrome && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 pt-2 pb-6 flex items-center justify-around z-40">
+                    <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200/80 px-3 pt-2 pb-5 flex items-center justify-around z-40 shadow-xs">
                         {([
                             { id: 'home' as AppScreen, icon: Home, label: 'Início' },
-                            { id: 'consultas' as AppScreen, icon: Calendar, label: 'Consultas' },
-                            { id: 'liz' as AppScreen, icon: Mic, label: 'LIZ', isCenter: true },
+                            { id: 'consultas' as AppScreen, icon: Clock, label: 'Histórico' },
+                            { id: 'liz' as AppScreen, icon: MessageSquare, label: 'LIZ', isCenter: true },
+                            { id: 'sinais-vitais' as AppScreen, icon: Heart, label: 'Saúde' },
                             { id: 'perfil' as AppScreen, icon: User, label: 'Perfil' },
                         ] as const).map((tab) => {
                             const isActive = screen === tab.id;
                             if ('isCenter' in tab && tab.isCenter) {
                                 const isBusy = orbState !== 'IDLE';
                                 return (
-                                    <button key={tab.id} onClick={() => navigateTo(tab.id)}
-                                        className={`-mt-6 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => navigateTo(tab.id)}
+                                        className="-mt-5 flex flex-col items-center group focus:outline-none"
+                                    >
+                                        <div className={`w-14 h-14 rounded-full flex flex-col items-center justify-center shadow-lg transition-all active:scale-95 ${
                                             isBusy
-                                                ? orbState === 'LISTENING' ? 'bg-emerald-500 text-white shadow-emerald-500/40 animate-pulse'
-                                                : orbState === 'THINKING' ? 'bg-indigo-600 text-white shadow-indigo-600/40 animate-pulse'
-                                                : 'bg-cyan-500 text-white shadow-cyan-500/40 animate-pulse'
-                                            : isActive ? 'bg-[#1D3461] text-white shadow-[#1D3461]/30'
-                                            : 'bg-emerald-500 text-white shadow-emerald-500/30'
+                                                ? 'bg-emerald-600 text-white animate-pulse'
+                                                : 'bg-[#0A192F] text-white hover:bg-[#152544]'
                                         }`}>
-                                        {isBusy && orbState === 'THINKING' ? <Loader2 className="w-6 h-6 animate-spin" />
-                                            : isBusy && orbState === 'SPEAKING' ? <Volume2 className="w-6 h-6" />
-                                            : <Mic className="w-6 h-6" />}
+                                            {isBusy && orbState === 'THINKING' ? (
+                                                <Loader2 className="w-5 h-5 animate-spin text-[#2DD4BF]" />
+                                            ) : (
+                                                <MessageSquare className="w-5 h-5 text-[#2DD4BF]" />
+                                            )}
+                                            <span className="text-[9px] font-bold text-white tracking-wider mt-0.5">LIZ</span>
+                                        </div>
                                     </button>
                                 );
                             }
                             return (
-                                <button key={tab.id} onClick={() => navigateTo(tab.id)}
-                                    className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-xl transition-all ${isActive ? 'text-[#1D3461]' : 'text-slate-400'}`}>
-                                    <tab.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : ''}`} />
-                                    <span className={`text-[10px] font-semibold ${isActive ? 'text-[#1D3461]' : 'text-slate-400'}`}>{tab.label}</span>
+                                <button
+                                    key={tab.id}
+                                    onClick={() => navigateTo(tab.id)}
+                                    className={`flex flex-col items-center gap-1 px-3 py-1 rounded-xl transition-all focus:outline-none ${
+                                        isActive ? 'text-[#0F172A]' : 'text-slate-400 hover:text-slate-600'
+                                    }`}
+                                >
+                                    <tab.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5] text-[#0F172A]' : 'text-slate-400'}`} />
+                                    <span className={`text-[10px] ${isActive ? 'font-bold text-[#0F172A]' : 'font-medium text-slate-400'}`}>
+                                        {tab.label}
+                                    </span>
                                 </button>
                             );
                         })}
@@ -985,23 +989,39 @@ const HomeScreen: React.FC<{
     notifications, markAllRead, onTalkToLiz, orbState, lizProactiveAlert, onDismissAlert,
     healthProfile, adherenceStats, latestVitals, activeMedReminder,
     onTakeReminder, onSkipReminder, onRequestNotificationPermission
-}) => (
-    <div className="bg-gradient-to-b from-[#1D3461] to-[#162749] min-h-full">
-        <div className="px-5 pt-12 pb-8 text-white">
-            <div className="flex items-center justify-between mb-6">
+}) => {
+    // Determina status clínico dos sinais vitais
+    const bpSystolic = latestVitals?.systolic_bp ?? 210;
+    const bpDiastolic = latestVitals?.diastolic_bp ?? 100;
+    const heartRate = latestVitals?.heart_rate ?? 125;
+    const isBpHigh = bpSystolic >= 140 || bpDiastolic >= 90;
+    const isHrHigh = heartRate >= 100 || heartRate <= 50;
+    const hasVitalsAlert = isBpHigh || isHrHigh;
+
+    return (
+        <div className="bg-[#F8FAFC] min-h-full px-4 pt-8 pb-10 sm:px-5">
+            {/* ── 1. HEADER ── */}
+            <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-3">
-                    <ElyonLogo size="sm" />
+                    <img
+                        src="/elyon-logo.jpg"
+                        alt="ELYON HEALTH"
+                        className="w-12 h-12 object-contain rounded-2xl border border-slate-100 shadow-xs"
+                    />
                     <div>
-                        <p className="text-[10px] text-blue-300 font-semibold uppercase tracking-wider">ELYON Health</p>
-                        <h1 className="text-lg font-bold leading-tight">Olá, {patient.name} 👋</h1>
+                        <h1 className="text-lg font-bold text-[#0F172A] leading-tight">Olá, {patient.name} 👋</h1>
+                        <p className="text-xs text-slate-500 font-normal mt-0.5">Como está se sentindo hoje?</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={() => setShowNotifications(!showNotifications)}
-                        className="relative p-2 bg-white/10 rounded-xl backdrop-blur-sm hover:bg-white/20 transition">
-                        <Bell className="w-5 h-5 text-white" />
+                    <button
+                        onClick={() => setShowNotifications(!showNotifications)}
+                        className="relative w-11 h-11 bg-white hover:bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-center text-[#0F172A] transition shadow-xs"
+                        aria-label="Notificações"
+                    >
+                        <Bell className="w-5 h-5 text-[#0F172A]" />
                         {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center animate-pulse">{unreadCount}</span>
+                            <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
                         )}
                     </button>
                 </div>
@@ -1009,51 +1029,50 @@ const HomeScreen: React.FC<{
 
             {/* Central de Notificações Popover */}
             {showNotifications && (
-                <div className="bg-white rounded-2xl p-4 mb-4 shadow-2xl text-slate-800 animate-fadeIn border border-slate-100">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-1.5">
-                            <Bell className="w-4 h-4 text-[#1D3461]" />
-                            <h3 className="text-sm font-bold text-slate-900">Notificações & Lembretes</h3>
+                <div className="bg-white rounded-3xl p-4 mb-4 shadow-xl text-slate-800 animate-fadeIn border border-slate-200/80">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        <div className="flex items-center gap-2">
+                            <Bell className="w-4 h-4 text-[#0F172A]" />
+                            <h3 className="text-sm font-bold text-[#0F172A]">Notificações & Lembretes</h3>
                         </div>
-                        <button onClick={markAllRead} className="text-[10px] font-semibold text-blue-600 hover:underline">Marcar como lidas</button>
+                        <button onClick={markAllRead} className="text-[11px] font-semibold text-blue-600 hover:underline">
+                            Marcar como lidas
+                        </button>
                     </div>
-                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                         {notifications.map((n) => (
-                            <div key={n.id} className={`text-xs p-2.5 rounded-xl transition ${n.read ? 'bg-slate-50 text-slate-500' : 'bg-blue-50 text-slate-800 border border-blue-100 font-medium'}`}>
+                            <div key={n.id} className={`text-xs p-3 rounded-2xl transition ${n.read ? 'bg-slate-50 text-slate-500' : 'bg-blue-50/70 text-slate-800 border border-blue-100 font-medium'}`}>
                                 <p className="leading-relaxed">{n.text}</p>
-                                <span className="text-[9px] text-slate-400 mt-1 block">{n.time}</span>
+                                <span className="text-[9px] text-slate-400 mt-1 block font-normal">{n.time}</span>
                             </div>
                         ))}
                     </div>
                 </div>
             )}
 
-            {/* ── ⏰ MEDICATION REMINDER INTERACTIVE BANNER ── */}
+            {/* ── ⏰ LEMBRETE ATIVO DE MEDICAÇÃO (SE HOUVER DOSE PENDENTE) ── */}
             {activeMedReminder && (
-                <div className="mb-4 bg-gradient-to-r from-teal-500/25 to-emerald-500/25 backdrop-blur-md border-2 border-teal-400/50 rounded-2xl p-4 relative overflow-hidden shadow-lg animate-pulse">
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-teal-400/30 flex items-center justify-center flex-shrink-0">
-                                <Clock className="w-5 h-5 text-teal-200" />
-                            </div>
-                            <div>
-                                <span className="text-[10px] font-black tracking-wider uppercase text-teal-300">Hora do Medicamento ({activeMedReminder.time})</span>
-                                <p className="text-sm font-bold text-white leading-tight">{activeMedReminder.medName}</p>
-                                <p className="text-xs text-blue-100 mt-0.5">{activeMedReminder.dosage}</p>
-                            </div>
+                <div className="mb-4 bg-white border border-teal-500/30 rounded-3xl p-4 shadow-xs">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center flex-shrink-0">
+                            <Clock className="w-5 h-5 text-teal-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <span className="text-[10px] font-bold tracking-wider uppercase text-teal-700">Hora do Medicamento ({activeMedReminder.time})</span>
+                            <p className="text-sm font-bold text-[#0F172A] leading-tight mt-0.5 truncate">{activeMedReminder.medName}</p>
+                            <p className="text-xs text-slate-500">{activeMedReminder.dosage}</p>
                         </div>
                     </div>
-
-                    <div className="flex items-center gap-2 mt-3">
+                    <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100">
                         <button
                             onClick={() => onTakeReminder(activeMedReminder.medId, activeMedReminder.time)}
-                            className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition active:scale-95 shadow-md shadow-emerald-500/30 flex items-center justify-center gap-1.5"
+                            className="flex-1 py-2.5 bg-[#0F172A] hover:bg-[#1E293B] text-white rounded-xl text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1.5"
                         >
-                            <CheckCircle className="w-3.5 h-3.5" /> Já Tomei
+                            <CheckCircle className="w-3.5 h-3.5 text-teal-400" /> Já Tomei
                         </button>
                         <button
                             onClick={() => onSkipReminder(activeMedReminder.medId, activeMedReminder.time)}
-                            className="px-3 py-2 bg-white/10 hover:bg-white/20 text-slate-200 rounded-xl text-xs font-semibold transition active:scale-95"
+                            className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition active:scale-95"
                         >
                             Pular
                         </button>
@@ -1061,171 +1080,234 @@ const HomeScreen: React.FC<{
                 </div>
             )}
 
-            {/* ── LIZ Proactive Alert Banner ── */}
-            {lizProactiveAlert && (
-                <div className="mb-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 backdrop-blur-sm border border-emerald-400/30 rounded-2xl p-4 relative overflow-hidden">
-                    <div className="absolute -top-4 -right-4 w-16 h-16 bg-emerald-400/10 rounded-full blur-xl pointer-events-none" />
-                    <div className="flex items-start gap-3 relative z-10">
-                        <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <Sparkles className="w-4 h-4 text-emerald-300" />
+            {/* ── 2. LIZ · CUIDADO PROATIVO (CARD PRINCIPAL HEALTH TECH) ── */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] mb-5">
+                {/* Header do Card */}
+                <div className="flex items-start gap-3.5 mb-4">
+                    {/* Avatar LIZ */}
+                    <div className="relative flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-[#0A192F] flex items-center justify-center shadow-xs">
+                            <Sparkles className="w-6 h-6 text-[#2DD4BF]" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">LIZ • Cuidado Proativo</span>
-                            </div>
-                            <p className="text-xs text-white/90 leading-relaxed">{lizProactiveAlert}</p>
-                            <button
-                                onClick={onTalkToLiz}
-                                className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-400/30 rounded-full text-[10px] font-bold text-emerald-200 transition-all active:scale-95"
-                            >
-                                <Mic className="w-3 h-3" />
-                                Resolver Agora
+                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+                    </div>
+
+                    {/* Textos LIZ */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-teal-700 uppercase tracking-wider flex items-center gap-1">
+                                <Shield className="w-3.5 h-3.5 text-teal-600 inline" />
+                                LIZ • CUIDADO PROATIVO
+                            </span>
+                            <button onClick={onTalkToLiz} className="text-slate-400 hover:text-slate-600 transition p-1 -mr-1">
+                                <ChevronRight className="w-4 h-4" />
                             </button>
                         </div>
-                        <button onClick={onDismissAlert} className="p-1 hover:bg-white/10 rounded-lg transition flex-shrink-0">
-                            <XIcon className="w-3.5 h-3.5 text-white/40" />
+                        <h2 className="text-sm sm:text-base font-bold text-[#0F172A] mt-1 leading-snug">
+                            {hasVitalsAlert
+                                ? 'Seus sinais vitais precisam de atenção'
+                                : (lizProactiveAlert || 'Seu plano de cuidado está em dia')}
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                            {hasVitalsAlert
+                                ? 'Sua pressão arterial e frequência cardíaca estão acima dos valores esperados.'
+                                : (lizProactiveAlert ? 'A LIZ identificou atualizações importantes para sua rotina de saúde.' : 'Seu histórico e adesão aos cuidados continuam sendo monitorados.')}
+                        </p>
+                    </div>
+                </div>
+
+                {/* 2 Indicadores Padronizados de Sinais Vitais */}
+                <div className="grid grid-cols-2 gap-2.5 mb-4">
+                    {/* Indicador 1: Pressão Arterial */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-white border border-slate-200/60 flex items-center justify-center flex-shrink-0 text-slate-700 shadow-2xs">
+                            <Heart className="w-4 h-4 text-slate-700" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider truncate">PRESSÃO ARTERIAL</p>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                <span className="text-xs font-bold text-[#0F172A] truncate">
+                                    {bpSystolic}/{bpDiastolic} mmHg
+                                </span>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase leading-none ${
+                                    isBpHigh
+                                        ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                }`}>
+                                    {isBpHigh ? 'ALTO' : 'NORMAL'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Indicador 2: Frequência Cardíaca */}
+                    <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-xl bg-white border border-slate-200/60 flex items-center justify-center flex-shrink-0 text-slate-700 shadow-2xs">
+                            <Activity className="w-4 h-4 text-slate-700" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[9px] uppercase font-bold text-slate-400 tracking-wider truncate">FREQUÊNCIA CARDÍACA</p>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                <span className="text-xs font-bold text-[#0F172A] truncate">
+                                    {heartRate} bpm
+                                </span>
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase leading-none ${
+                                    isHrHigh
+                                        ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                }`}>
+                                    {isHrHigh ? 'ALTO' : 'NORMAL'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Botão Principal: Conversar com a LIZ */}
+                <button
+                    onClick={onTalkToLiz}
+                    className="w-full py-3.5 bg-[#0A192F] hover:bg-[#1E293B] text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition active:scale-[0.99]"
+                >
+                    <MessageSquare className="w-4 h-4 text-[#2DD4BF]" />
+                    Conversar com a LIZ
+                </button>
+            </div>
+
+            {/* ── 3. ACESSO RÁPIDO (6 BOTÕES RIGOROSAMENTE PADRONIZADOS) ── */}
+            <div className="mb-6">
+                <h2 className="text-sm font-bold text-[#0F172A] mb-3">Acesso rápido</h2>
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                    {[
+                        { id: 'consultas', label: 'Consultas', icon: Calendar, action: () => navigateTo('consultas') },
+                        { id: 'prescricoes', label: 'Prescrições', icon: Pill, action: () => navigateTo('prescricoes') },
+                        { id: 'sinais-vitais', label: 'Sinais vitais', icon: Heart, action: () => navigateTo('sinais-vitais') },
+                        { id: 'exames', label: 'Exames', icon: FlaskConical, action: () => navigateTo('exames') },
+                        { id: 'cartao', label: 'Cartão Saúde', icon: CreditCard, action: () => navigateTo('cartao') },
+                        { id: 'liz', label: 'Falar com a LIZ', icon: Mic, action: onTalkToLiz },
+                    ].map((item) => (
+                        <button
+                            key={item.label}
+                            onClick={item.action}
+                            className="bg-white border border-slate-200/80 hover:border-slate-300 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center justify-center gap-2.5 text-center shadow-xs transition active:scale-95 group"
+                        >
+                            <item.icon className="w-6 h-6 text-[#0F172A] stroke-[1.75] group-hover:scale-105 transition-transform" />
+                            <span className="text-xs font-semibold text-[#0F172A] leading-tight">{item.label}</span>
                         </button>
-                    </div>
+                    ))}
                 </div>
-            )}
+            </div>
 
-            {NEXT_APPOINTMENTS[0] && (
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-                    <p className="text-[10px] uppercase tracking-widest text-blue-200 font-bold mb-2">Próxima Consulta</p>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-base font-bold">{NEXT_APPOINTMENTS[0].specialty}</p>
-                            <p className="text-xs text-blue-200">{NEXT_APPOINTMENTS[0].doctor}</p>
+            {/* ── 4. RESUMO DE SAÚDE (CONTAINER ÚNICO BRANCO COM LISTA) ── */}
+            <div className="mb-6">
+                <h2 className="text-sm font-bold text-[#0F172A] mb-3">Resumo de saúde</h2>
+                <div className="bg-white rounded-3xl border border-slate-200/80 divide-y divide-slate-100 shadow-xs overflow-hidden">
+                    {/* Item 1: Adesão Medicamentosa */}
+                    <button
+                        onClick={() => navigateTo('prescricoes')}
+                        className="w-full p-4 flex items-center gap-3.5 hover:bg-slate-50/70 transition text-left group"
+                    >
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                            <Pill className="w-5 h-5" />
                         </div>
-                        <div className="text-right">
-                            <p className="text-sm font-bold">{NEXT_APPOINTMENTS[0].date}</p>
-                            <p className="text-xs text-blue-200">{NEXT_APPOINTMENTS[0].time}</p>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs text-slate-500 font-medium">Adesão medicamentosa <span className="text-slate-400 font-normal">(hoje)</span></p>
+                            <p className="text-sm font-bold text-slate-900 mt-0.5">
+                                {adherenceStats
+                                    ? `${adherenceStats.todayRate}% tomada (${adherenceStats.takenToday}/${adherenceStats.totalScheduledToday} doses)`
+                                    : '100% tomada (0/0 doses)'}
+                            </p>
                         </div>
-                    </div>
-                </div>
-            )}
-        </div>
-
-        <div className="bg-white rounded-t-3xl -mt-2 px-5 pt-6 pb-4 min-h-[400px]">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Acesso Rápido</h2>
-            <div className="grid grid-cols-3 gap-2.5 mb-6">
-                {[
-                    { icon: Calendar, label: 'Consultas', color: 'bg-blue-50 text-blue-600 border-blue-100', action: () => navigateTo('consultas') },
-                    { icon: Pill, label: 'Prescrições', color: 'bg-emerald-50 text-emerald-600 border-emerald-100', action: () => navigateTo('prescricoes') },
-                    { icon: Activity, label: 'Sinais Vitais', color: 'bg-rose-50 text-rose-600 border-rose-100', action: () => navigateTo('sinais-vitais') },
-                    { icon: FlaskConical, label: 'Exames', color: 'bg-purple-50 text-purple-600 border-purple-100', action: () => navigateTo('exames') },
-                    { icon: CreditCard, label: 'Cartão Saúde', color: 'bg-amber-50 text-amber-600 border-amber-100', action: () => navigateTo('cartao') },
-                    { icon: Mic, label: 'Falar com LIZ', color: 'bg-cyan-50 text-cyan-600 border-cyan-100', action: onTalkToLiz, isMic: true },
-                ].map((item) => (
-                    <button key={item.label} onClick={item.action}
-                        className={`flex flex-col items-center justify-center gap-1.5 p-3.5 rounded-2xl border transition-all active:scale-95 text-center ${item.color} ${
-                            (item as any).isMic && orbState === 'THINKING' ? 'animate-pulse ring-2 ring-indigo-400' : ''
-                        }`}>
-                        {(item as any).isMic && orbState === 'THINKING' ? <Loader2 className="w-5 h-5 animate-spin" />
-                            : (item as any).isMic && orbState === 'SPEAKING' ? <Volume2 className="w-5 h-5 animate-pulse" />
-                            : <item.icon className="w-5 h-5" />}
-                        <span className="text-[11px] font-bold leading-tight">{item.label}</span>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                                EM DIA
+                            </span>
+                            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition" />
+                        </div>
                     </button>
-                ))}
+
+                    {/* Item 2: Últimos Sinais Vitais */}
+                    <button
+                        onClick={() => navigateTo('sinais-vitais')}
+                        className="w-full p-4 flex items-center gap-3.5 hover:bg-slate-50/70 transition text-left group"
+                    >
+                        <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center flex-shrink-0">
+                            <Activity className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs text-slate-500 font-medium">Últimos sinais vitais</p>
+                            <p className="text-sm font-bold text-slate-900 mt-0.5 truncate">
+                                PA: {bpSystolic}/{bpDiastolic} mmHg • FC: {heartRate} bpm
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
+                                hasVitalsAlert
+                                    ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}>
+                                {hasVitalsAlert ? 'ATENÇÃO' : 'NORMAL'}
+                            </span>
+                            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition" />
+                        </div>
+                    </button>
+
+                    {/* Item 3: Tipo Sanguíneo */}
+                    <div className="w-full p-4 flex items-center gap-3.5 text-left">
+                        <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                            <Droplets className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs text-slate-500 font-medium">Tipo sanguíneo</p>
+                            <p className="text-sm font-bold text-slate-900 mt-0.5">{patient.bloodType || 'A+'}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-300" />
+                    </div>
+
+                    {/* Item 4: Próxima Consulta */}
+                    <button
+                        onClick={() => navigateTo('consultas')}
+                        className="w-full p-4 flex items-center gap-3.5 hover:bg-slate-50/70 transition text-left group"
+                    >
+                        <div className="w-10 h-10 rounded-2xl bg-slate-100 text-[#0F172A] flex items-center justify-center flex-shrink-0">
+                            <Calendar className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs text-slate-500 font-medium">Próxima consulta</p>
+                            <p className="text-sm font-bold text-slate-900 mt-0.5">
+                                {NEXT_APPOINTMENTS[0]?.specialty || 'Cardiologia'} • <span className="text-slate-500 font-normal">{NEXT_APPOINTMENTS[0]?.doctor || 'Dr. Marcelo Ferreira'}</span>
+                            </p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                                {NEXT_APPOINTMENTS[0]?.date || '28/08/2026'} às {NEXT_APPOINTMENTS[0]?.time || '09:30'}
+                            </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition" />
+                    </button>
+                </div>
             </div>
 
-            {/* Triage Card */}
-            <button onClick={() => navigateTo('triagem')}
-                className={`w-full p-4 rounded-2xl border transition-all active:scale-[0.98] mb-6 text-left ${
-                    healthProfile?.triage_completed
-                        ? 'bg-emerald-50 border-emerald-200'
-                        : 'bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 animate-pulse'
+            {/* ── 5. TRIAGEM DE SAÚDE (BANNER COMPACTO & DISCRETO) ── */}
+            <button
+                onClick={() => navigateTo('triagem')}
+                className="w-full p-4 rounded-3xl bg-white border border-slate-200/80 shadow-xs hover:border-slate-300 transition flex items-center gap-3.5 text-left"
+            >
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                    healthProfile?.triage_completed ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-[#0F172A]'
                 }`}>
-                <div className="flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-                        healthProfile?.triage_completed ? 'bg-emerald-100' : 'bg-purple-100'
-                    }`}>
-                        {healthProfile?.triage_completed
-                            ? <CheckCircle className="w-5 h-5 text-emerald-600" />
-                            : <ClipboardList className="w-5 h-5 text-purple-600" />}
-                    </div>
-                    <div className="flex-1">
-                        <p className={`text-sm font-bold ${healthProfile?.triage_completed ? 'text-emerald-800' : 'text-purple-800'}`}>
-                            {healthProfile?.triage_completed ? '✅ Perfil de Saúde Completo' : '🩺 Triagem de Saúde'}
-                        </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">
-                            {healthProfile?.triage_completed
-                                ? 'Toque para ver seu perfil completo'
-                                : 'Conte à LIZ sobre sua rotina e saúde'}
-                        </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    {healthProfile?.triage_completed ? <CheckCircle className="w-5 h-5" /> : <ClipboardList className="w-5 h-5" />}
                 </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-[#0F172A]">
+                        {healthProfile?.triage_completed ? 'Perfil de Saúde Completo' : 'Completar Triagem de Saúde'}
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                        {healthProfile?.triage_completed ? 'Toque para revisar seu histórico clínico' : 'Conte à LIZ sobre sua rotina, alergias e histórico'}
+                    </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
             </button>
-
-            {/* Resumo de Saúde Atualizado */}
-            <h2 className="text-sm font-bold text-slate-900 mb-3">Resumo de Saúde</h2>
-            <div className="space-y-2.5">
-                {/* Adesão às medicações */}
-                <button
-                    onClick={() => navigateTo('prescricoes')}
-                    className="w-full flex items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition text-left"
-                >
-                    <div className="w-10 h-10 rounded-xl border border-emerald-100 bg-emerald-50 flex items-center justify-center text-emerald-600">
-                        <Pill className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Adesão Medicamentosa (Hoje)</p>
-                        <p className="text-sm font-bold text-slate-900">
-                            {adherenceStats ? `${adherenceStats.todayRate}% tomada (${adherenceStats.takenToday}/${adherenceStats.totalScheduledToday} doses)` : 'Gerenciar Prescrições'}
-                        </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-
-                {/* Sinais Vitais Recentes */}
-                <button
-                    onClick={() => navigateTo('sinais-vitais')}
-                    className="w-full flex items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition text-left"
-                >
-                    <div className="w-10 h-10 rounded-xl border border-rose-100 bg-rose-50 flex items-center justify-center text-rose-600">
-                        <Activity className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Últimos Sinais Vitais</p>
-                        <p className="text-sm font-bold text-slate-900">
-                            {latestVitals && latestVitals.systolic_bp && latestVitals.diastolic_bp
-                                ? `PA: ${latestVitals.systolic_bp}/${latestVitals.diastolic_bp} mmHg${latestVitals.heart_rate ? ` • FC: ${latestVitals.heart_rate} bpm` : ''}`
-                                : 'Toque para registrar medição'}
-                        </p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-
-                {/* Tipo Sanguíneo */}
-                <div className="flex items-center gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100">
-                    <div className="w-10 h-10 rounded-xl border border-red-100 bg-red-50 flex items-center justify-center text-red-500">
-                        <Droplets className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Tipo Sanguíneo</p>
-                        <p className="text-sm font-bold text-slate-900">{patient.bloodType}</p>
-                    </div>
-                </div>
-
-                {/* Exames Pendentes */}
-                <button
-                    onClick={() => navigateTo('exames')}
-                    className="w-full flex items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition text-left"
-                >
-                    <div className="w-10 h-10 rounded-xl border border-amber-100 bg-amber-50 flex items-center justify-center text-amber-600">
-                        <FlaskConical className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase">Exames Pendentes</p>
-                        <p className="text-sm font-bold text-slate-900">{`${EXAMS.filter((e) => e.status === 'Pendente').length} pendentes`}</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                </button>
-            </div>
         </div>
-    </div>
-);
+    );
+};
 
 // ══════════════════════════════════════════════════════════════════════════════════
 //  SCREEN: CONSULTAS
