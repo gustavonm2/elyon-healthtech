@@ -5,6 +5,14 @@ import { ArrowRight, Users, UserPlus, Building2, MessageSquare, Video, RefreshCw
 const Home: React.FC = () => {
     const navigate = useNavigate();
 
+    React.useEffect(() => {
+        // Se o app foi aberto como atalho no iPhone ou PWA, redireciona automaticamente para o app do paciente
+        const isStandalone = (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
+        if (isStandalone) {
+            navigate('/app-paciente', { replace: true });
+        }
+    }, [navigate]);
+
     return (
         <div className="min-h-screen bg-[#F0F4F8] font-['Inter',sans-serif] text-slate-900">
 
