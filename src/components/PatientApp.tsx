@@ -623,77 +623,70 @@ export const PatientApp: React.FC = () => {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════════
-//  SCREEN: SPLASH (ANIMAÇÃO CINEMATOGRÁFICA HEALTH TECH)
+//  SCREEN: SPLASH (SURGIMENTO CINEMATOGRÁFICO MINIMALISTA)
 // ══════════════════════════════════════════════════════════════════════════════════
 const SplashScreen: React.FC = () => {
-    const [progress, setProgress] = useState(15);
-    const [phaseText, setPhaseText] = useState('Iniciando Inteligência LIZ...');
+    const [isRevealed, setIsRevealed] = useState(false);
+    const [showSubtitle, setShowSubtitle] = useState(false);
 
     useEffect(() => {
-        const t1 = setTimeout(() => { setProgress(55); setPhaseText('Sincronizando protocolos clínicos...'); }, 700);
-        const t2 = setTimeout(() => { setProgress(90); setPhaseText('Calibrando cuidado personalizado...'); }, 1400);
-        const t3 = setTimeout(() => { setProgress(100); setPhaseText('Bem-vindo à ELYON Health'); }, 2000);
-        return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+        // Sequência suave de revelação cinematográfica
+        const t1 = setTimeout(() => setIsRevealed(true), 250);
+        const t2 = setTimeout(() => setShowSubtitle(true), 1100);
+        return () => { clearTimeout(t1); clearTimeout(t2); };
     }, []);
 
     return (
-        <div className="h-full flex flex-col items-center justify-between py-12 px-6 bg-gradient-to-b from-[#0F172A] via-[#1D3461] to-[#0A1120] relative overflow-hidden select-none">
-            {/* Holographic glowing backgrounds */}
-            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#1D3461]/40 rounded-full blur-[100px] pointer-events-none animate-pulse" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-[#C0392B]/15 rounded-full blur-[90px] pointer-events-none" />
-            <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="h-full w-full flex flex-col items-center justify-center bg-[#0C1930] relative overflow-hidden select-none px-6">
+            {/* Brilho radial suave ao fundo sem qualquer card ou caixa */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#1D3461]/60 via-[#0C1930] to-[#081020] pointer-events-none" />
 
-            {/* Top Badge */}
-            <div className="relative z-10 pt-4 animate-fadeIn">
-                <span className="text-[10px] font-bold tracking-[0.35em] text-blue-200/70 uppercase px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                    ELYON HEALTHTECH
-                </span>
-            </div>
-
-            {/* Center: Logo with Multi-layer Pulse Radar & Shimmer */}
-            <div className="relative z-10 flex flex-col items-center my-auto">
-                <div className="relative flex items-center justify-center mb-7">
-                    {/* Concentric expanding pulse rings */}
-                    <div className="absolute w-44 h-44 rounded-full border border-blue-400/20 animate-ping opacity-25" style={{ animationDuration: '3s' }} />
-                    <div className="absolute w-36 h-36 rounded-full border border-[#C0392B]/30 animate-pulse opacity-40" />
-                    <div className="absolute w-32 h-32 rounded-3xl bg-blue-500/20 blur-xl animate-pulse" />
-
-                    {/* Logo Box with Soft 3D Glow */}
-                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-3xl p-1 bg-gradient-to-b from-white/20 via-white/5 to-white/0 border border-white/20 shadow-[0_0_50px_rgba(29,52,97,0.8)] backdrop-blur-md overflow-hidden transform hover:scale-105 transition-transform duration-500">
-                        <img
-                            src="/elyon-logo.jpg"
-                            alt="Elyon Health"
-                            className="w-full h-full object-contain rounded-[22px] shadow-inner"
-                        />
-                        {/* Diagonal light beam sweep */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer pointer-events-none" />
-                    </div>
-                </div>
-
-                {/* Typography */}
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-[0.2em] leading-none text-center drop-shadow-md">
-                    ELYON
-                </h1>
-                <p className="text-xs font-bold text-blue-200/90 tracking-[0.25em] uppercase mt-2 text-center">
-                    CUIDADO INTEGRADO & INTELIGENTE
-                </p>
-                <p className="text-[11px] text-slate-400 font-medium tracking-wider mt-1 text-center">
-                    Conecta. Coordena. Eleva.
-                </p>
-            </div>
-
-            {/* Bottom: Modern High-tech Progress Bar */}
-            <div className="relative z-10 w-full max-w-xs flex flex-col items-center gap-2.5 pb-2">
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm p-[1px] border border-white/10">
-                    <div
-                        className="h-full bg-gradient-to-r from-[#C0392B] via-blue-400 to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-[0_0_12px_rgba(192,57,43,0.8)]"
-                        style={{ width: `${progress}%` }}
+            {/* Conteúdo Central: Surgimento Gradual */}
+            <div className="relative z-10 flex flex-col items-center">
+                {/* Logo da ELYON surgindo suavemente da escuridão */}
+                <div
+                    className={`transition-all duration-1000 ease-out transform mb-6 ${
+                        isRevealed
+                            ? 'opacity-100 scale-100 blur-none'
+                            : 'opacity-0 scale-90 blur-md'
+                    }`}
+                >
+                    <img
+                        src="/elyon-logo.jpg"
+                        alt="ELYON"
+                        className="w-24 h-24 sm:w-28 sm:h-28 object-contain rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.4)]"
                     />
                 </div>
-                <div className="flex items-center justify-between w-full text-[10px] text-blue-200/80 font-medium px-0.5">
-                    <span className="truncate">{phaseText}</span>
-                    <span className="font-mono text-slate-400">{progress}%</span>
-                </div>
+
+                {/* Nome ELYON com efeito de surgimento e expansão de tracking */}
+                <h1
+                    className={`text-3xl sm:text-4xl font-extrabold text-white leading-none text-center transition-all duration-1000 ease-out transform ${
+                        isRevealed
+                            ? 'opacity-100 tracking-[0.35em] translate-y-0 blur-none'
+                            : 'opacity-0 tracking-[0.1em] translate-y-4 blur-sm'
+                    }`}
+                    style={{ fontFamily: "'Manrope', 'Inter', sans-serif" }}
+                >
+                    ELYON
+                </h1>
+
+                {/* Linha luminosa minimalista */}
+                <div
+                    className={`h-[1.5px] bg-gradient-to-r from-transparent via-[#C0392B] to-transparent my-3.5 transition-all duration-1000 ease-out ${
+                        isRevealed ? 'w-24 opacity-80' : 'w-0 opacity-0'
+                    }`}
+                />
+
+                {/* Subtítulo institucional surgindo com atraso elegante */}
+                <p
+                    className={`text-[11px] sm:text-xs font-semibold text-blue-200/90 uppercase text-center transition-all duration-1000 ease-out transform ${
+                        showSubtitle
+                            ? 'opacity-100 tracking-[0.25em] translate-y-0 blur-none'
+                            : 'opacity-0 tracking-[0.1em] translate-y-2 blur-xs'
+                    }`}
+                >
+                    Cuidado Integrado & Inteligente
+                </p>
             </div>
         </div>
     );
