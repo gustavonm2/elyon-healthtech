@@ -722,10 +722,16 @@ const LoginScreen: React.FC<{ onLogin: (p: Patient) => void; onGoToRegister: () 
 
     return (
         <div className="h-full flex flex-col bg-white">
-            <div className="bg-gradient-to-br from-[#1D3461] to-[#0F172A] px-6 pt-14 pb-10 flex flex-col items-center rounded-b-[2.5rem] shadow-lg">
-                <img src="/elyon-logo.jpg" alt="Elyon HealthTech" className="w-20 h-20 object-contain rounded-2xl shadow-xl shadow-blue-500/20 mb-4" />
-                <h1 className="text-2xl font-bold text-white tracking-wide">ELYON</h1>
-                <p className="text-[10px] text-blue-300 tracking-[0.25em] font-semibold uppercase mt-0.5">Portal do Paciente</p>
+            <div className="bg-gradient-to-br from-[#1D3461] via-[#162749] to-[#0F172A] px-6 pt-12 pb-8 flex items-center gap-4 rounded-b-[2.5rem] shadow-lg">
+                <img
+                    src="/elyon-logo.jpg"
+                    alt="Elyon Health"
+                    className="w-14 h-14 object-contain rounded-2xl bg-white p-1 shadow-md border border-white/20 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-2xl font-extrabold text-white tracking-wide leading-none">ELYON</h1>
+                    <p className="text-[11px] text-blue-200 tracking-[0.25em] font-bold uppercase mt-1.5 truncate">Portal do Paciente</p>
+                </div>
             </div>
 
             <div className="flex-1 px-6 pt-8 flex flex-col">
@@ -1149,13 +1155,14 @@ const HomeScreen: React.FC<{
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] mb-5">
                 {/* Header do Card */}
                 <div className="flex items-start gap-3.5 mb-4">
-                    {/* Avatar LIZ com Logo Oficial */}
+                    {/* Avatar Personagem Mulher LIZ */}
                     <div className="relative flex-shrink-0">
                         <img
-                            src="/elyon-logo.jpg"
-                            alt="LIZ Elyon"
-                            className="w-12 h-12 rounded-2xl object-contain bg-white border border-slate-100 shadow-xs"
+                            src="/liz-avatar.jpg"
+                            alt="LIZ - Coordenadora de Cuidado"
+                            className="w-13 h-13 rounded-2xl object-cover border border-slate-200 shadow-xs"
                         />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
                     </div>
 
                     {/* Textos LIZ */}
@@ -1494,13 +1501,20 @@ const LizScreen: React.FC<{
     const orb = orbConfig[orbState];
 
     return (
-        <div className="flex flex-col items-center px-5 pt-10 pb-4 min-h-full bg-gradient-to-b from-slate-900 to-slate-800">
-            <ElyonLogo size="sm" />
-            <h1 className="text-lg font-bold text-white mb-0.5 mt-2">Assistente <span className="text-emerald-400">LIZ</span></h1>
-            <p className="text-[10px] text-slate-500 mb-2">Coordenadora do Cuidado • IA Contextual</p>
-            <div className="bg-emerald-950/40 border border-emerald-800/40 rounded-full px-3 py-1 mb-5 flex items-center gap-1.5">
-                <Activity className="w-3 h-3 text-emerald-400" />
-                <span className="text-[10px] text-emerald-300 font-semibold">Conectada ao painel de {clinicalContext.patientName}</span>
+        <div className="flex flex-col items-center px-5 pt-8 pb-4 min-h-full bg-gradient-to-b from-[#0F172A] via-[#1D3461] to-[#0A1120]">
+            <div className="relative mb-2">
+                <img
+                    src="/liz-avatar.jpg"
+                    alt="LIZ AI"
+                    className="w-16 h-16 rounded-2xl object-cover border-2 border-white/20 shadow-xl"
+                />
+                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900 animate-pulse" />
+            </div>
+            <h1 className="text-lg font-bold text-white mb-0.5">Assistente <span className="text-blue-300">LIZ</span></h1>
+            <p className="text-[10px] text-slate-300 mb-2">Coordenadora do Cuidado • IA Contextual</p>
+            <div className="bg-white/10 border border-white/15 backdrop-blur-md rounded-full px-3 py-1 mb-5 flex items-center gap-1.5">
+                <Activity className="w-3 h-3 text-blue-300" />
+                <span className="text-[10px] text-blue-100 font-semibold">Conectada ao painel de {clinicalContext.patientName}</span>
             </div>
             <div className="relative mb-4">
                 {orbState !== 'IDLE' && <div className={`absolute inset-0 w-32 h-32 rounded-full blur-2xl opacity-25 pointer-events-none ${orbState === 'LISTENING' ? 'bg-emerald-400 animate-ping' : orbState === 'THINKING' ? 'bg-indigo-400 animate-pulse' : 'bg-cyan-400 animate-pulse'}`} />}
