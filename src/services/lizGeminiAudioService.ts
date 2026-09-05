@@ -233,134 +233,155 @@ class LizGeminiAudioService {
 
         const apiKey = getInternalGeminiKey();
 
-        // 1. Tentar Síntese Neural Humanizada com Gemini 2.5 Flash Preview TTS
+        // 1. Tentar Síntese Neural Humanizada com Gemini TTS (com multi-model fallback e timeout de 8s)
         if (apiKey) {
-            try {
-                emitTtsLog(`Solicitando áudio neural para: "${cleanText.slice(0, 50)}..."`, 'info');
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`,
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [
-                                {
-                                    role: 'user',
-                                    parts: [
-                                        {
-                                            text: `Fale a seguinte mensagem com tom humanizado, calmo, empático e acolhedor em português do Brasil:\n"${cleanText}"`,
-                                        },
-                                    ],
-                                },
-                            ],
-                            generationConfig: {
-                                responseModalities: ['AUDIO'],
-                                speechConfig: {
-                                    voiceConfig: {
-                                        prebuiltVoiceConfig: {
-                                            voiceName: 'Aoede', // Voz feminina humanizada
+            const candidateModels = [
+                'gemini-2.5-flash-preview-tts',
+                'gemini-3.1-flash-tts-preview',
+            ];
+
+            for (const model of candidateModels) {
+                try {
+                    emitTtsLog(`Solicitando áudio neural (${model}): "${cleanText.slice(0, 40)}..."`, 'info');
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                    const response = await fetch(
+                        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                        {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [
+                                    {
+                                        role: 'user',
+                                        parts: [
+                                            {
+                                                text: `Fale com carinho, tom empático, calmo e acolhedor em português do Brasil:\n"${cleanText}"`,
+                                            },
+                                        ],
+                                    },
+                                ],
+                                generationConfig: {
+                                    responseModalities: ['AUDIO'],
+                                    speechConfig: {
+                                        voiceConfig: {
+                                            prebuiltVoiceConfig: {
+                                                voiceName: 'Aoede',
+                                            },
                                         },
                                     },
                                 },
-                            },
-                        }),
-                    }
-                );
-
-                emitTtsLog(`resposta recebida (HTTP Status: ${response.status})`, response.ok ? 'success' : 'error');
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const candidate = data.candidates?.[0];
-                    const audioPart = candidate?.content?.parts?.find(
-                        (p: any) => p.inlineData && p.inlineData.mimeType?.startsWith('audio/')
-                    );
-
-                    if (audioPart?.inlineData?.data) {
-                        const mime = audioPart.inlineData.mimeType || 'audio/L16;codec=pcm;rate=24000';
-                        emitTtsLog(`MIME/content-type recebido: ${mime}`, 'info');
-
-                        const sampleRate = mime.includes('rate=')
-                            ? parseInt(mime.split('rate=')[1], 10)
-                            : 24000;
-
-                        // Decodificação Base64 -> Uint8Array
-                        const binaryString = atob(audioPart.inlineData.data);
-                        const pcmBytes = new Uint8Array(binaryString.length);
-                        for (let i = 0; i < binaryString.length; i++) {
-                            pcmBytes[i] = binaryString.charCodeAt(i);
+                            }),
+                            signal: controller.signal,
                         }
-                        emitTtsLog(`áudio base64 decodificado com sucesso`, 'success');
-                        emitTtsLog(`tamanho do áudio em bytes: ${pcmBytes.length}`, 'info');
+                    );
+                    clearTimeout(timeoutId);
 
-                        // Criação de WAV oficial
-                        const wavBuffer = createWavBuffer(pcmBytes, sampleRate, 1);
+                    emitTtsLog(`Resposta recebida de ${model} (HTTP Status: ${response.status})`, response.ok ? 'success' : 'warn');
 
-                        // Método 1: Reprodução direta via HTMLAudioElement (WAV)
-                        const playedHtml = await this.playViaHtmlAudio(wavBuffer, onStart, onEnd);
-                        if (playedHtml) return;
+                    if (response.ok) {
+                        const data = await response.json();
+                        const candidate = data.candidates?.[0];
+                        const audioPart = candidate?.content?.parts?.find(
+                            (p: any) => p.inlineData && p.inlineData.mimeType?.startsWith('audio/')
+                        );
 
-                        // Método 2: Fallback WebAudio Context
-                        const playedWeb = await this.playViaWebAudio(pcmBytes, sampleRate, onStart, onEnd);
-                        if (playedWeb) return;
+                        if (audioPart?.inlineData?.data) {
+                            const mime = audioPart.inlineData.mimeType || 'audio/L16;codec=pcm;rate=24000';
+                            emitTtsLog(`MIME/content-type: ${mime}`, 'info');
+
+                            const sampleRate = mime.includes('rate=')
+                                ? parseInt(mime.split('rate=')[1], 10)
+                                : 24000;
+
+                            const binaryString = atob(audioPart.inlineData.data);
+                            const pcmBytes = new Uint8Array(binaryString.length);
+                            for (let i = 0; i < binaryString.length; i++) {
+                                pcmBytes[i] = binaryString.charCodeAt(i);
+                            }
+                            emitTtsLog(`Áudio decodificado (${pcmBytes.length} bytes PCM)`, 'success');
+
+                            // 1. WAV Playback
+                            const wavBuffer = createWavBuffer(pcmBytes, sampleRate, 1);
+                            const playedHtml = await this.playViaHtmlAudio(wavBuffer, onStart, onEnd);
+                            if (playedHtml) return;
+
+                            // 2. WebAudio Playback
+                            const playedWeb = await this.playViaWebAudio(pcmBytes, sampleRate, onStart, onEnd);
+                            if (playedWeb) return;
+                        }
                     } else {
-                        emitTtsLog('Resposta do Gemini não contém partes de áudio válidas', 'warn');
+                        const errData = await response.json();
+                        emitTtsLog(`Modelo ${model} indisponível: ${errData.error?.message || response.statusText}`, 'warn');
                     }
-                } else {
-                    const errData = await response.json();
-                    emitTtsLog(`Gemini API retornou erro: ${JSON.stringify(errData)}`, 'error');
+                } catch (err: any) {
+                    emitTtsLog(`Falha na chamada (${model}): ${err.name === 'AbortError' ? 'Timeout (8s)' : err.message}`, 'warn');
                 }
-            } catch (err: any) {
-                emitTtsLog(`Falha no fluxo Gemini TTS: ${err.message}`, 'error');
             }
         } else {
-            emitTtsLog('Chave Gemini API não encontrada para TTS', 'warn');
+            emitTtsLog('Chave Gemini API não configurada para TTS', 'warn');
         }
 
-        // 3. Fallback fluído via SpeechSynthesis do navegador
-        emitTtsLog('Utilizando fallback nativo SpeechSynthesis', 'warn');
+        // 3. Fallback imediato e audível no navegador
+        emitTtsLog('Ativando fallback de voz do navegador...', 'info');
         if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.lang = 'pt-BR';
-            utterance.rate = 0.88;
-            utterance.pitch = 1.05;
-            utterance.volume = 1.0;
+            window.speechSynthesis.cancel();
 
-            const voices = window.speechSynthesis.getVoices();
-            const ptFemaleVoice =
-                voices.find(
-                    (v) =>
-                        v.lang.startsWith('pt-BR') &&
-                        (v.name.includes('Luciana') ||
-                            v.name.includes('Francisca') ||
-                            v.name.includes('Female') ||
-                            v.name.includes('Helena') ||
-                            v.name.includes('Google português do Brasil'))
-                ) ||
-                voices.find((v) => v.lang.startsWith('pt-BR')) ||
-                voices.find((v) => v.lang.startsWith('pt'));
+            const speakWithNative = () => {
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'pt-BR';
+                utterance.rate = 0.90;
+                utterance.pitch = 1.05;
+                utterance.volume = 1.0;
 
-            if (ptFemaleVoice) {
-                utterance.voice = ptFemaleVoice;
+                const voices = window.speechSynthesis.getVoices();
+                const ptFemaleVoice =
+                    voices.find(
+                        (v) =>
+                            v.lang.startsWith('pt-BR') &&
+                            (v.name.toLowerCase().includes('luciana') ||
+                                v.name.toLowerCase().includes('leticia') ||
+                                v.name.toLowerCase().includes('maria') ||
+                                v.name.toLowerCase().includes('female') ||
+                                v.name.toLowerCase().includes('fernanda') ||
+                                v.name.toLowerCase().includes('google português'))
+                    ) ||
+                    voices.find((v) => v.lang.startsWith('pt-BR')) ||
+                    voices.find((v) => v.lang.startsWith('pt'));
+
+                if (ptFemaleVoice) {
+                    utterance.voice = ptFemaleVoice;
+                    emitTtsLog(`Voz selecionada: ${ptFemaleVoice.name}`, 'info');
+                }
+
+                utterance.onstart = () => {
+                    emitTtsLog('Reprodução em andamento (Voz do Navegador)', 'success');
+                    if (onStart) onStart();
+                };
+
+                utterance.onend = () => {
+                    emitTtsLog('Reprodução concluída', 'success');
+                    if (onEnd) onEnd();
+                };
+
+                utterance.onerror = (e: any) => {
+                    emitTtsLog(`Erro na reprodução nativa: ${e.error || 'desconhecido'}`, 'error');
+                    if (onEnd) onEnd();
+                };
+
+                this.currentUtterance = utterance;
+                window.speechSynthesis.speak(utterance);
+            };
+
+            if (window.speechSynthesis.getVoices().length > 0) {
+                speakWithNative();
+            } else {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    speakWithNative();
+                };
             }
-
-            utterance.onstart = () => {
-                emitTtsLog('reprodução iniciada (SpeechSynthesis)', 'info');
-                if (onStart) onStart();
-            };
-
-            utterance.onend = () => {
-                emitTtsLog('reprodução finalizada (SpeechSynthesis)', 'info');
-                if (onEnd) onEnd();
-            };
-
-            utterance.onerror = (e) => {
-                emitTtsLog(`Erro no SpeechSynthesis: ${JSON.stringify(e)}`, 'error');
-                if (onEnd) onEnd();
-            };
-
-            this.currentUtterance = utterance;
-            window.speechSynthesis.speak(utterance);
         } else {
             if (onEnd) onEnd();
         }
