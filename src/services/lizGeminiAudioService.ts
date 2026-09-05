@@ -81,11 +81,11 @@ class LizGeminiAudioService {
 
         const apiKey = getInternalGeminiKey();
 
-        // 1. Tentar Síntese Neural Humanizada com Gemini
+        // 1. Tentar Síntese Neural Humanizada com Gemini 2.5 Flash Preview TTS
         if (apiKey) {
             try {
                 const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -95,7 +95,7 @@ class LizGeminiAudioService {
                                     role: 'user',
                                     parts: [
                                         {
-                                            text: `Fale a seguinte mensagem de forma humana, empática, acolhedora e natural em português brasileiro:\n"${cleanText}"`,
+                                            text: `Fale a seguinte mensagem de forma humana, calma, empática e acolhedora em português brasileiro:\n"${cleanText}"`,
                                         },
                                     ],
                                 },
@@ -105,7 +105,7 @@ class LizGeminiAudioService {
                                 speechConfig: {
                                     voiceConfig: {
                                         prebuiltVoiceConfig: {
-                                            voiceName: 'Aoede', // Voz feminina natural e empática
+                                            voiceName: 'Aoede', // Voz feminina humanizada e acolhedora
                                         },
                                     },
                                 },
@@ -122,7 +122,7 @@ class LizGeminiAudioService {
                     );
 
                     if (audioPart?.inlineData?.data) {
-                        const mime = audioPart.inlineData.mimeType || 'audio/mp3';
+                        const mime = audioPart.inlineData.mimeType || 'audio/L16;rate=24000';
                         const sampleRate = mime.includes('rate=')
                             ? parseInt(mime.split('rate=')[1], 10)
                             : 24000;
@@ -135,6 +135,9 @@ class LizGeminiAudioService {
                         );
                         if (played) return;
                     }
+                } else {
+                    const errData = await response.json();
+                    console.warn('[LIZ TTS] Gemini API retornou erro:', errData);
                 }
             } catch (err) {
                 console.warn('[LIZ TTS] Fallback para sintetizador nativo:', err);

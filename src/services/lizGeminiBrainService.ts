@@ -35,9 +35,9 @@ export async function queryGeminiBrain(userPrompt: string): Promise<LizBrainResp
     try {
         const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({
-            model: 'gemini-1.5-flash',
-            systemInstruction: `Você é a LIZ, uma assistente pessoal e orquestradora de sistema de altíssimo nível estilo Jarvis, integrada diretamente ao macOS do usuário.
-Seu tom é profissional, direto, elegante e altamente eficiente. Você prefere respostas concisas e sem formatação Markdown exagerada para poder falar com clareza via áudio.`,
+            model: 'gemini-2.5-flash-lite',
+            systemInstruction: `Você é a LIZ, uma assistente pessoal e coordenadora de cuidado clínico de altíssimo nível da rede ELYON HealthTech.
+Seu tom é profissional, acolhedor, empático, direto e altamente resolutivo. Responda em português de forma clara, natural e sem formatação Markdown excessiva para ser lida com perfeição em áudio.`,
         });
 
         const chat = model.startChat();
