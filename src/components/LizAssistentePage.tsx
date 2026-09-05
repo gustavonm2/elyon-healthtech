@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Mic, MicOff, Send, Bot, User, Radio, Volume2 } from 'lucide-react';
+import { Mic, MicOff, Send, Bot, User, Radio, Volume2, Terminal, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { LizFluidParticleOrb } from './LizFluidParticleOrb';
 import { useLizVoice } from '../hooks/useLizVoice';
 import { useLizHearing } from '../hooks/useLizHearing';
 import { queryGeminiBrain, type LizBrainResponse } from '../services/lizGeminiBrainService';
-import { lizGeminiAudioService } from '../services/lizGeminiAudioService';
+import { lizGeminiAudioService, type LizTtsLogEntry } from '../services/lizGeminiAudioService';
 
 interface ChatMessage {
     id: string;
@@ -26,9 +26,27 @@ export const LizAssistentePage: React.FC = () => {
 
     const [inputText, setInputText] = useState<string>('');
     const [isProcessingCommand, setIsProcessingCommand] = useState<boolean>(false);
+    const [ttsLogs, setTtsLogs] = useState<LizTtsLogEntry[]>([]);
+    const [showDebugTerminal, setShowDebugTerminal] = useState<boolean>(true);
 
     const { isSpeaking, isMuted, toggleMute, speak } = useLizVoice();
     const chatEndRef = useRef<HTMLDivElement>(null);
+    const logsEndRef = useRef<HTMLDivElement>(null);
+
+    // Escutar eventos de logs em tempo real do pipeline TTS
+    useEffect(() => {
+        const handleLogEvent = (e: any) => {
+            if (e.detail) {
+                setTtsLogs((prev) => [...prev.slice(-40), e.detail]);
+            }
+        };
+        window.addEventListener('liz-tts-log', handleLogEvent);
+        return () => window.removeEventListener('liz-tts-log', handleLogEvent);
+    }, []);
+
+    useEffect(() => {
+        logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [ttsLogs]);
 
     // Command Execution Handler
     const handleExecuteCommand = useCallback(
@@ -249,6 +267,72 @@ export const LizAssistentePage: React.FC = () => {
                     })}
                     <div ref={chatEndRef} />
                 </div>
+            </div>
+
+            {/* ── 🖥️ PAINEL DE DEBUG DO PIPELINE DE ÁUDIO / TTS LIZ EM TEMPO REAL ── */}
+            <div className="max-w-4xl mx-auto w-full bg-black/90 border border-slate-700/80 rounded-2xl p-4 shadow-2xl font-mono text-xs space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <div className="flex items-center gap-2">
+                        <Terminal className="w-4 h-4 text-emerald-400" />
+                        <span className="font-bold text-slate-200 uppercase tracking-wider text-[11px]">
+                            Console de Depuração em Tempo Real • Gemini TTS Pipeline
+                        </span>
+                        <span className="bg-emerald-950 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full border border-emerald-800/60 font-semibold">
+                            {ttsLogs.length} eventos
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setTtsLogs([])}
+                            className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition"
+                            title="Limpar logs"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                            onClick={() => setShowDebugTerminal(!showDebugTerminal)}
+                            className="p-1 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition"
+                            title={showDebugTerminal ? 'Minimizar Console' : 'Expandir Console'}
+                        >
+                            {showDebugTerminal ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                        </button>
+                    </div>
+                </div>
+
+                {showDebugTerminal && (
+                    <div className="bg-slate-950 rounded-xl p-3 max-h-48 overflow-y-auto space-y-1.5 border border-slate-800/80">
+                        {ttsLogs.length === 0 ? (
+                            <p className="text-slate-500 italic text-[11px]">
+                                Aguardando tentativa de fala... Clique em "Testar Voz LIZ" ou envie uma mensagem para ver cada etapa da API e do áudio em tempo real aqui.
+                            </p>
+                        ) : (
+                            ttsLogs.map((log) => {
+                                const colorClass =
+                                    log.type === 'success'
+                                        ? 'text-emerald-400 bg-emerald-950/30 border-emerald-900/50'
+                                        : log.type === 'error'
+                                        ? 'text-rose-400 bg-rose-950/30 border-rose-900/50'
+                                        : log.type === 'warn'
+                                        ? 'text-amber-400 bg-amber-950/30 border-amber-900/50'
+                                        : 'text-slate-300 bg-slate-900/40 border-slate-800/50';
+
+                                return (
+                                    <div
+                                        key={log.id}
+                                        className={`flex items-start gap-2 text-[11px] p-1.5 rounded-lg border ${colorClass} leading-tight`}
+                                    >
+                                        <span className="text-slate-500 text-[10px] select-none flex-shrink-0 font-semibold">
+                                            [{log.time}]
+                                        </span>
+                                        <span className="flex-1 font-mono break-all">{log.message}</span>
+                                    </div>
+                                );
+                            })
+                        )}
+                        <div ref={logsEndRef} />
+                    </div>
+                )}
             </div>
 
         </div>

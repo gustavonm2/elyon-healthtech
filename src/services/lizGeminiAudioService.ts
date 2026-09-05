@@ -1,5 +1,24 @@
 import { getInternalGeminiKey } from './geminiKey';
 
+// Global TTS log emitter for in-app debug terminal
+export interface LizTtsLogEntry {
+    id: string;
+    time: string;
+    type: 'info' | 'success' | 'warn' | 'error';
+    message: string;
+}
+
+export const emitTtsLog = (message: string, type: 'info' | 'success' | 'warn' | 'error' = 'info') => {
+    const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    console.log(`[TTS ${type.toUpperCase()}] ${time} - ${message}`);
+    if (typeof window !== 'undefined') {
+        const event = new CustomEvent('liz-tts-log', {
+            detail: { id: `log-${Date.now()}-${Math.random()}`, time, type, message },
+        });
+        window.dispatchEvent(event);
+    }
+};
+
 /**
  * Converts raw PCM 16-bit linear buffer to standard RIFF/WAVE ArrayBuffer
  */
@@ -66,11 +85,11 @@ class LizGeminiAudioService {
             }
             if (this.audioContext && this.audioContext.state === 'suspended') {
                 this.audioContext.resume().then(() => {
-                    console.log('[TTS] AudioContext desbloqueado com sucesso (state:', this.audioContext?.state, ')');
+                    emitTtsLog(`AudioContext desbloqueado com sucesso (state: ${this.audioContext?.state})`, 'success');
                 });
             }
-        } catch (e) {
-            console.warn('[TTS] Aviso ao desbloquear AudioContext:', e);
+        } catch (e: any) {
+            emitTtsLog(`Aviso ao desbloquear AudioContext: ${e.message}`, 'warn');
         }
     }
 
@@ -90,12 +109,12 @@ class LizGeminiAudioService {
                 this.currentAudio = audio;
 
                 audio.onplay = () => {
-                    console.log('[TTS] reprodução iniciada (HTMLAudioElement)');
+                    emitTtsLog('reprodução iniciada (HTMLAudioElement WAV)', 'success');
                     if (onStart) onStart();
                 };
 
                 audio.onended = () => {
-                    console.log('[TTS] reprodução finalizada (HTMLAudioElement)');
+                    emitTtsLog('reprodução finalizada (HTMLAudioElement WAV)', 'success');
                     URL.revokeObjectURL(blobUrl);
                     this.currentAudio = null;
                     if (onEnd) onEnd();
@@ -103,7 +122,7 @@ class LizGeminiAudioService {
                 };
 
                 audio.onerror = (e) => {
-                    console.warn('[TTS] Erro no HTMLAudioElement, tentando WebAudio fallback:', e);
+                    emitTtsLog(`Erro no HTMLAudioElement (${JSON.stringify(e)}), tentando WebAudio fallback`, 'warn');
                     URL.revokeObjectURL(blobUrl);
                     this.currentAudio = null;
                     resolve(false);
@@ -112,14 +131,14 @@ class LizGeminiAudioService {
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
                     playPromise.catch((err) => {
-                        console.warn('[TTS] Autoplay bloqueado no HTMLAudio, caindo para WebAudio:', err);
+                        emitTtsLog(`Autoplay bloqueado no HTMLAudio (${err.message}), tentando WebAudio`, 'warn');
                         URL.revokeObjectURL(blobUrl);
                         this.currentAudio = null;
                         resolve(false);
                     });
                 }
-            } catch (err) {
-                console.warn('[TTS] Falha ao instanciar HTMLAudio:', err);
+            } catch (err: any) {
+                emitTtsLog(`Falha ao instanciar HTMLAudio: ${err.message}`, 'error');
                 resolve(false);
             }
         });
@@ -139,13 +158,16 @@ class LizGeminiAudioService {
             if (!this.audioContext && AudioCtx) {
                 this.audioContext = new AudioCtx({ sampleRate });
             }
-            if (!this.audioContext) return false;
+            if (!this.audioContext) {
+                emitTtsLog('WebAudio Context não disponível no navegador', 'error');
+                return false;
+            }
 
             if (this.audioContext.state === 'suspended') {
-                console.log('[TTS] AudioContext state antes de resume:', this.audioContext.state);
+                emitTtsLog(`AudioContext state antes de resume: ${this.audioContext.state}`, 'warn');
                 await this.audioContext.resume();
             }
-            console.log('[TTS] AudioContext state:', this.audioContext.state);
+            emitTtsLog(`AudioContext state: ${this.audioContext.state}`, 'info');
 
             // Garante alinhamento de 16-bit
             const sampleCount = Math.floor(pcmBytes.length / 2);
@@ -160,10 +182,10 @@ class LizGeminiAudioService {
 
             const audioBuffer = this.audioContext.createBuffer(1, float32Array.length, sampleRate);
             audioBuffer.getChannelData(0).set(float32Array);
-            console.log('[TTS] AudioBuffer criado (samples:', audioBuffer.length, 'duration:', audioBuffer.duration.toFixed(2), 's)');
+            emitTtsLog(`AudioBuffer criado (samples: ${audioBuffer.length}, duration: ${audioBuffer.duration.toFixed(2)}s)`, 'success');
 
             if (audioBuffer.length === 0) {
-                console.warn('[TTS] AudioBuffer vazio');
+                emitTtsLog('AudioBuffer vazio', 'error');
                 return false;
             }
 
@@ -174,17 +196,17 @@ class LizGeminiAudioService {
             this.currentAudioSource = source;
 
             source.onended = () => {
-                console.log('[TTS] reprodução finalizada (WebAudio)');
+                emitTtsLog('reprodução finalizada (WebAudio)', 'success');
                 this.currentAudioSource = null;
                 if (onEnd) onEnd();
             };
 
-            console.log('[TTS] reprodução iniciada (WebAudio)');
+            emitTtsLog('reprodução iniciada (WebAudio)', 'success');
             if (onStart) onStart();
             source.start(0);
             return true;
-        } catch (e) {
-            console.warn('[TTS] Falha no WebAudio playback:', e);
+        } catch (e: any) {
+            emitTtsLog(`Falha no WebAudio playback: ${e.message}`, 'error');
             return false;
         }
     }
@@ -214,7 +236,7 @@ class LizGeminiAudioService {
         // 1. Tentar Síntese Neural Humanizada com Gemini 2.5 Flash Preview TTS
         if (apiKey) {
             try {
-                console.log('[TTS] Solicitando áudio neural para:', `"${cleanText.slice(0, 60)}..."`);
+                emitTtsLog(`Solicitando áudio neural para: "${cleanText.slice(0, 50)}..."`, 'info');
                 const response = await fetch(
                     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`,
                     {
@@ -245,7 +267,7 @@ class LizGeminiAudioService {
                     }
                 );
 
-                console.log('[TTS] resposta recebida (Status:', response.status, ')');
+                emitTtsLog(`resposta recebida (HTTP Status: ${response.status})`, response.ok ? 'success' : 'error');
 
                 if (response.ok) {
                     const data = await response.json();
@@ -256,7 +278,7 @@ class LizGeminiAudioService {
 
                     if (audioPart?.inlineData?.data) {
                         const mime = audioPart.inlineData.mimeType || 'audio/L16;codec=pcm;rate=24000';
-                        console.log('[TTS] MIME/content-type recebido:', mime);
+                        emitTtsLog(`MIME/content-type recebido: ${mime}`, 'info');
 
                         const sampleRate = mime.includes('rate=')
                             ? parseInt(mime.split('rate=')[1], 10)
@@ -268,8 +290,8 @@ class LizGeminiAudioService {
                         for (let i = 0; i < binaryString.length; i++) {
                             pcmBytes[i] = binaryString.charCodeAt(i);
                         }
-                        console.log('[TTS] áudio base64 decodificado');
-                        console.log('[TTS] tamanho do áudio em bytes:', pcmBytes.length);
+                        emitTtsLog(`áudio base64 decodificado com sucesso`, 'success');
+                        emitTtsLog(`tamanho do áudio em bytes: ${pcmBytes.length}`, 'info');
 
                         // Criação de WAV oficial
                         const wavBuffer = createWavBuffer(pcmBytes, sampleRate, 1);
@@ -281,18 +303,22 @@ class LizGeminiAudioService {
                         // Método 2: Fallback WebAudio Context
                         const playedWeb = await this.playViaWebAudio(pcmBytes, sampleRate, onStart, onEnd);
                         if (playedWeb) return;
+                    } else {
+                        emitTtsLog('Resposta do Gemini não contém partes de áudio válidas', 'warn');
                     }
                 } else {
                     const errData = await response.json();
-                    console.warn('[TTS] Gemini API retornou erro:', errData);
+                    emitTtsLog(`Gemini API retornou erro: ${JSON.stringify(errData)}`, 'error');
                 }
-            } catch (err) {
-                console.warn('[TTS] Falha no fluxo Gemini TTS:', err);
+            } catch (err: any) {
+                emitTtsLog(`Falha no fluxo Gemini TTS: ${err.message}`, 'error');
             }
+        } else {
+            emitTtsLog('Chave Gemini API não encontrada para TTS', 'warn');
         }
 
         // 3. Fallback fluído via SpeechSynthesis do navegador
-        console.log('[TTS] Utilizando fallback nativo SpeechSynthesis');
+        emitTtsLog('Utilizando fallback nativo SpeechSynthesis', 'warn');
         if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(cleanText);
             utterance.lang = 'pt-BR';
@@ -319,14 +345,17 @@ class LizGeminiAudioService {
             }
 
             utterance.onstart = () => {
+                emitTtsLog('reprodução iniciada (SpeechSynthesis)', 'info');
                 if (onStart) onStart();
             };
 
             utterance.onend = () => {
+                emitTtsLog('reprodução finalizada (SpeechSynthesis)', 'info');
                 if (onEnd) onEnd();
             };
 
-            utterance.onerror = () => {
+            utterance.onerror = (e) => {
+                emitTtsLog(`Erro no SpeechSynthesis: ${JSON.stringify(e)}`, 'error');
                 if (onEnd) onEnd();
             };
 
