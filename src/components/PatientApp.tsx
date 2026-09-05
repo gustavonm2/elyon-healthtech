@@ -19,6 +19,7 @@ import {
 } from '../services/patientService';
 import { getInternalGeminiKey } from '../services/geminiKey';
 import { generateLizSystemPrompt } from '../ai/LizBrain';
+import { lizGeminiAudioService } from '../services/lizGeminiAudioService';
 import { PrescricoesScreenLive, TriagemSaudeScreen } from './PatientScreens';
 import { PatientCardScreen } from './PatientCardScreen';
 import { VitalsScreen } from './VitalsScreen';
@@ -395,30 +396,13 @@ export const PatientApp: React.FC = () => {
         setScreen('login');
     };
 
-    // ── TTS ──────────────────────────────────────────────────────────────────
+    // ── TTS: Falar a resposta da LIZ com Áudio Neural Humanizado ────────────
     const speakResponse = useCallback((text: string) => {
-        if (!('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-        const clean = text.replace(/[*#_>]/g, '').replace(/\s+/g, ' ').trim();
-        const utt = new SpeechSynthesisUtterance(clean);
-        utt.lang = 'pt-BR';
-        utt.rate = 0.82;
-        utt.pitch = 1.0;
-        const voices = window.speechSynthesis.getVoices();
-        const pt = voices.find((v) => v.lang.startsWith('pt-BR')) || voices.find((v) => v.lang.startsWith('pt'));
-        if (pt) utt.voice = pt;
-        utt.onstart = () => setOrbState('SPEAKING');
-        utt.onend = () => setOrbState('IDLE');
-        utt.onerror = () => setOrbState('IDLE');
-        if (voices.length > 0) { window.speechSynthesis.speak(utt); }
-        else {
-            window.speechSynthesis.onvoiceschanged = () => {
-                const v2 = window.speechSynthesis.getVoices();
-                const pt2 = v2.find((x) => x.lang.startsWith('pt-BR')) || v2.find((x) => x.lang.startsWith('pt'));
-                if (pt2) utt.voice = pt2;
-                window.speechSynthesis.speak(utt);
-            };
-        }
+        lizGeminiAudioService.playNeuralSpeech(
+            text,
+            () => setOrbState('SPEAKING'),
+            () => setOrbState('IDLE')
+        );
     }, []);
 
     // ── LLM (Gemini with Clinical Context) ───────────────────────────────────

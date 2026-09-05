@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Mic, MicOff, Loader2, Volume2, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { lizGeminiAudioService } from '../services/lizGeminiAudioService';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface ConversationEntry {
@@ -40,49 +41,13 @@ Ao receber relatos de sintomas, priorize a segurança do paciente e forneça ori
     }, [conversation]);
 
     // ── TTS: Falar a resposta da LIZ ─────────────────────────────────────────
+    // ── TTS: Falar a resposta da LIZ com Áudio Neural Humanizado ────────────
     const speakResponse = useCallback((text: string) => {
-        if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-            setErrorMessage('Seu navegador não suporta síntese de voz (TTS).');
-            setOrbState('IDLE');
-            return;
-        }
-
-        window.speechSynthesis.cancel();
-
-        const cleanText = text
-            .replace(/[*#_>]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.82;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        const voices = window.speechSynthesis.getVoices();
-        const ptVoice =
-            voices.find((v) => v.lang.startsWith('pt-BR')) ||
-            voices.find((v) => v.lang.startsWith('pt'));
-        if (ptVoice) utterance.voice = ptVoice;
-
-        utterance.onstart = () => setOrbState('SPEAKING');
-        utterance.onend = () => setOrbState('IDLE');
-        utterance.onerror = () => setOrbState('IDLE');
-
-        synthRef.current = utterance;
-
-        // Voices may load async
-        if (voices.length > 0) {
-            window.speechSynthesis.speak(utterance);
-        } else {
-            window.speechSynthesis.onvoiceschanged = () => {
-                const v = window.speechSynthesis.getVoices();
-                const pt = v.find((x) => x.lang.startsWith('pt-BR')) || v.find((x) => x.lang.startsWith('pt'));
-                if (pt) utterance.voice = pt;
-                window.speechSynthesis.speak(utterance);
-            };
-        }
+        lizGeminiAudioService.playNeuralSpeech(
+            text,
+            () => setOrbState('SPEAKING'),
+            () => setOrbState('IDLE')
+        );
     }, []);
 
     // ── LLM: Enviar ao Gemini e receber resposta ─────────────────────────────
