@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Mic, MicOff, Send, Bot, User, Radio } from 'lucide-react';
+import { Mic, MicOff, Send, Bot, User, Radio, Volume2 } from 'lucide-react';
 import { LizFluidParticleOrb } from './LizFluidParticleOrb';
 import { useLizVoice } from '../hooks/useLizVoice';
 import { useLizHearing } from '../hooks/useLizHearing';
 import { queryGeminiBrain, type LizBrainResponse } from '../services/lizGeminiBrainService';
+import { lizGeminiAudioService } from '../services/lizGeminiAudioService';
 
 interface ChatMessage {
     id: string;
@@ -95,18 +96,36 @@ export const LizAssistentePage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mic Mute Toggle */}
-                <button
-                    onClick={toggleListening}
-                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
-                        isListening
-                            ? 'bg-teal-500/20 border-teal-500 text-teal-300 shadow-lg shadow-teal-500/10'
-                            : 'bg-rose-950 border-rose-800 text-rose-400'
-                    }`}
-                >
-                    {isListening ? <Mic className="w-4 h-4 text-teal-400 animate-pulse" /> : <MicOff className="w-4 h-4 text-rose-400" />}
-                    {isListening ? 'Escuta Ativa ("Liz")' : 'Mic Mutado'}
-                </button>
+                {/* Header Actions */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                            lizGeminiAudioService.unlockAudioContext();
+                            speak('Olá, eu sou a Liz. Estou aqui para cuidar de você.');
+                        }}
+                        className="px-3 py-1.5 rounded-xl border border-teal-500/40 bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95"
+                        title="Testar voz da LIZ com Gemini TTS"
+                    >
+                        <Volume2 className="w-4 h-4 text-teal-400" />
+                        <span>Testar Voz LIZ</span>
+                    </button>
+
+                    {/* Mic Mute Toggle */}
+                    <button
+                        onClick={() => {
+                            lizGeminiAudioService.unlockAudioContext();
+                            toggleListening();
+                        }}
+                        className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1.5 ${
+                            isListening
+                                ? 'bg-teal-500/20 border-teal-500 text-teal-300 shadow-lg shadow-teal-500/10'
+                                : 'bg-rose-950 border-rose-800 text-rose-400'
+                        }`}
+                    >
+                        {isListening ? <Mic className="w-4 h-4 text-teal-400 animate-pulse" /> : <MicOff className="w-4 h-4 text-rose-400" />}
+                        {isListening ? 'Escuta Ativa ("Liz")' : 'Mic Mutado'}
+                    </button>
+                </div>
             </div>
 
             {/* ── CENTER OF THE SCREEN: CLEAN 3D FLUID NEON ORB ── */}
