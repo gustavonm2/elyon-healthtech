@@ -342,26 +342,11 @@ export const PrescricoesScreenLive: React.FC<{
                 </>
             ) : (
                 <>
-                    <h2 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-1">
-                        <CheckCircle className="w-3.5 h-3.5" /> Exemplos de Prescrições
-                    </h2>
-                    <div className="space-y-3 mb-4">
-                        {mockPrescriptions.filter(p => p.active).map(rx => (
-                            <div key={rx.id} className="bg-white rounded-2xl border border-emerald-100 p-4 shadow-sm">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                                        <Pill className="w-5 h-5 text-emerald-600" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-bold text-slate-900">{rx.med}</p>
-                                        <p className="text-xs text-slate-500">{rx.dosage}</p>
-                                        <p className="text-[10px] text-slate-400 mt-1">{rx.doctor} · {rx.date}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="text-center py-10">
+                        <Pill className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+                        <p className="text-sm font-medium text-slate-500 mb-1">Nenhuma medicação cadastrada</p>
+                        <p className="text-xs text-slate-400 mb-4">Toque em "Adicionar" para cadastrar seus remédios com horários reais.</p>
                     </div>
-                    <p className="text-xs text-slate-400 text-center italic mb-4">Acima: dados demonstrativos. Toque em "Adicionar" para cadastrar seus remédios com horários reais.</p>
                 </>
             )}
 

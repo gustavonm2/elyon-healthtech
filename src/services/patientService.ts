@@ -14,8 +14,19 @@ export interface Patient {
     address: string | null;
     zip_code: string | null;
     blood_type: string | null;
+    unknown_blood_type?: boolean;
     allergies: string[];
+    allergies_status?: string | null;
+    allergy_categories?: string[];
+    medication_allergy_details?: string | null;
+    food_allergy_details?: string | null;
+    chemical_allergy_details?: string | null;
+    other_allergy_details?: string | null;
     chronic_conditions: string[];
+    health_conditions?: string[];
+    no_known_conditions?: boolean;
+    unknown_health_conditions?: boolean;
+    other_health_condition_details?: string | null;
     emergency_contact_name: string | null;
     emergency_contact_phone: string | null;
     avatar_url?: string | null;
@@ -498,4 +509,204 @@ export async function getMonitorData(): Promise<MonitorPatientRow[]> {
 
     result.sort((a, b) => b.total - a.total);
     return result;
+}
+
+// ── Appointments ─────────────────────────────────────────────────────────────────
+export interface Appointment {
+    id: string;
+    patient_id: string;
+    doctor_name: string;
+    doctor_crm: string | null;
+    specialty: string;
+    appointment_date: string;
+    appointment_time: string;
+    type: 'Presencial' | 'Teleconsulta';
+    teleconsultation_url: string | null;
+    location: string | null;
+    status: 'Agendada' | 'Confirmada' | 'Realizada' | 'Cancelada' | 'Não compareceu';
+    chief_complaint: string | null;
+    doctor_notes: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export type AppointmentInsert = Omit<Appointment, 'id' | 'created_at' | 'updated_at'>;
+
+export async function listAppointments(patientId: string): Promise<Appointment[]> {
+    const { data, error } = await supabasePatients
+        .from('patient_appointments')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('appointment_date', { ascending: false });
+    if (error || !data) return [];
+    return data as Appointment[];
+}
+
+export async function listUpcomingAppointments(patientId: string): Promise<Appointment[]> {
+    const today = new Date().toISOString().split('T')[0];
+    const { data, error } = await supabasePatients
+        .from('patient_appointments')
+        .select('*')
+        .eq('patient_id', patientId)
+        .in('status', ['Agendada', 'Confirmada'])
+        .gte('appointment_date', today)
+        .order('appointment_date', { ascending: true });
+    if (error || !data) return [];
+    return data as Appointment[];
+}
+
+export async function listPastAppointments(patientId: string): Promise<Appointment[]> {
+    const { data, error } = await supabasePatients
+        .from('patient_appointments')
+        .select('*')
+        .eq('patient_id', patientId)
+        .in('status', ['Realizada', 'Cancelada', 'Não compareceu'])
+        .order('appointment_date', { ascending: false })
+        .limit(20);
+    if (error || !data) return [];
+    return data as Appointment[];
+}
+
+export async function addAppointment(apt: AppointmentInsert): Promise<{ data: Appointment | null; error: string | null }> {
+    const { data, error } = await supabasePatients
+        .from('patient_appointments')
+        .insert(apt)
+        .select()
+        .single();
+    if (error) return { data: null, error: error.message };
+    return { data: data as Appointment, error: null };
+}
+
+export async function updateAppointmentStatus(id: string, status: Appointment['status']): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_appointments')
+        .update({ status })
+        .eq('id', id);
+    return !error;
+}
+
+export async function cancelAppointment(id: string): Promise<boolean> {
+    return updateAppointmentStatus(id, 'Cancelada');
+}
+
+// ── Exams ────────────────────────────────────────────────────────────────────────
+export interface Exam {
+    id: string;
+    patient_id: string;
+    name: string;
+    category: 'Laboratorial' | 'Imagem' | 'Cardiológico' | 'Outros';
+    doctor_name: string | null;
+    request_date: string;
+    scheduled_date: string | null;
+    scheduled_location: string | null;
+    status: 'Pendente' | 'Agendado' | 'Resultado Disponível' | 'Cancelado';
+    laboratory_name: string | null;
+    result_summary: string | null;
+    result_file_url: string | null;
+    has_abnormalities: boolean;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export type ExamInsert = Omit<Exam, 'id' | 'created_at' | 'updated_at'>;
+
+export async function listExams(patientId: string): Promise<Exam[]> {
+    const { data, error } = await supabasePatients
+        .from('patient_exams')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('request_date', { ascending: false });
+    if (error || !data) return [];
+    return data as Exam[];
+}
+
+export async function addExam(exam: ExamInsert): Promise<{ data: Exam | null; error: string | null }> {
+    const { data, error } = await supabasePatients
+        .from('patient_exams')
+        .insert(exam)
+        .select()
+        .single();
+    if (error) return { data: null, error: error.message };
+    return { data: data as Exam, error: null };
+}
+
+export async function updateExamStatus(id: string, status: Exam['status'], resultSummary?: string): Promise<boolean> {
+    const update: any = { status };
+    if (resultSummary !== undefined) update.result_summary = resultSummary;
+    const { error } = await supabasePatients
+        .from('patient_exams')
+        .update(update)
+        .eq('id', id);
+    return !error;
+}
+
+// ── Notifications ────────────────────────────────────────────────────────────────
+export interface PatientNotification {
+    id: string;
+    patient_id: string;
+    title: string;
+    message: string;
+    type: 'consulta' | 'exame' | 'medicamento' | 'alerta_liz' | 'sistema';
+    reference_id: string | null;
+    read: boolean;
+    read_at: string | null;
+    created_at: string;
+}
+
+export async function listNotifications(patientId: string, limit = 30): Promise<PatientNotification[]> {
+    const { data, error } = await supabasePatients
+        .from('patient_notifications')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+    if (error || !data) return [];
+    return data as PatientNotification[];
+}
+
+export async function getUnreadNotificationCount(patientId: string): Promise<number> {
+    const { count, error } = await supabasePatients
+        .from('patient_notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('patient_id', patientId)
+        .eq('read', false);
+    if (error || count === null) return 0;
+    return count;
+}
+
+export async function markNotificationRead(id: string): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_notifications')
+        .update({ read: true, read_at: new Date().toISOString() })
+        .eq('id', id);
+    return !error;
+}
+
+export async function markAllNotificationsRead(patientId: string): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_notifications')
+        .update({ read: true, read_at: new Date().toISOString() })
+        .eq('patient_id', patientId)
+        .eq('read', false);
+    return !error;
+}
+
+export async function createNotification(
+    patientId: string,
+    message: string,
+    type: PatientNotification['type'],
+    title = '',
+    referenceId?: string
+): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_notifications')
+        .insert({
+            patient_id: patientId,
+            title,
+            message,
+            type,
+            reference_id: referenceId || null,
+        });
+    return !error;
 }
