@@ -31,10 +31,16 @@ const Home: React.FC = () => {
                     </div>
 
                     {/* Nav Links */}
-                    <div className="hidden md:flex items-center gap-10 font-semibold text-sm text-[#1E293B]">
+                    <div className="hidden md:flex items-center gap-6 font-semibold text-sm text-[#1E293B]">
                         <a href="#como-funciona" className="hover:text-[#1D3461] transition-colors">Como funciona</a>
                         <a href="#solucoes" className="hover:text-[#1D3461] transition-colors">Soluções</a>
                         <a href="#contato" className="hover:text-[#1D3461] transition-colors">Contato</a>
+                        <button
+                            onClick={() => navigate('/app-paciente')}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm transition-all shadow-md shadow-emerald-600/20"
+                        >
+                            App Paciente (LIZ)
+                        </button>
                         <button
                             onClick={() => navigate('/login')}
                             className="bg-[#1D3461] hover:bg-[#162749] text-white font-bold px-5 py-2.5 rounded-full text-sm transition-all"
@@ -44,12 +50,20 @@ const Home: React.FC = () => {
                     </div>
 
                     {/* Mobile access button */}
-                    <button
-                        onClick={() => navigate('/login')}
-                        className="md:hidden bg-[#1D3461] text-white font-bold px-4 py-2 rounded-full text-sm"
-                    >
-                        Acessar
-                    </button>
+                    <div className="flex items-center gap-2 md:hidden">
+                        <button
+                            onClick={() => navigate('/app-paciente')}
+                            className="bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-full text-xs"
+                        >
+                            App Paciente
+                        </button>
+                        <button
+                            onClick={() => navigate('/login')}
+                            className="bg-[#1D3461] text-white font-bold px-3 py-1.5 rounded-full text-xs"
+                        >
+                            Acessar
+                        </button>
+                    </div>
                 </div>
             </nav>
 
@@ -80,10 +94,16 @@ const Home: React.FC = () => {
                             </p>
                             <div className="flex flex-wrap gap-3">
                                 <button
+                                    onClick={() => navigate('/app-paciente')}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-4 rounded-full flex items-center gap-2 transition-all shadow-lg shadow-emerald-600/25"
+                                >
+                                    <Heart className="w-5 h-5" /> Abrir App do Paciente (LIZ)
+                                </button>
+                                <button
                                     onClick={() => navigate('/cadastro-clinica')}
                                     className="border-2 border-[#1D3461] text-[#1D3461] hover:bg-[#EEF4FA] font-bold px-8 py-4 rounded-full flex items-center gap-2 transition-all"
                                 >
-                                    <Users className="w-5 h-5" /> Criar minha Clínica Virtual
+                                    <Users className="w-5 h-5" /> Criar Clínica Virtual
                                 </button>
                                 <button
                                     onClick={() => navigate('/cadastro')}
