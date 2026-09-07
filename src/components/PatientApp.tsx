@@ -17,7 +17,7 @@ import {
     listVitalSigns,
     listUpcomingAppointments, listPastAppointments, addAppointment,
     listExams,
-    listNotifications, markAllNotificationsRead,
+    listNotifications, markAllNotificationsRead, createNotification,
     type Patient, type PatientInsert, type Medication, type MedicationInsert,
     type HealthProfile, type VitalSign, type MedicationLog,
     type Appointment, type Exam, type PatientNotification
@@ -369,64 +369,99 @@ export const PatientApp: React.FC = () => {
         }
     }, [loggedPatient, refreshPatientData]);
 
-    // ── Medication Reminders & Notification Timer ────────────────────────────
+    // ── Smart Alerts Engine: Medicamentos, Consultas, Exames e Sinais Vitais ──
     useEffect(() => {
-        if (!loggedPatient || medications.length === 0) return;
+        if (!loggedPatient) return;
 
         const checkReminders = async () => {
             const now = new Date();
-            const todayLogs = await listTodayMedicationLogs(loggedPatient.id);
-            const activeMeds = medications.filter(m => m.active);
+            const todayStr = now.toISOString().split('T')[0];
 
-            for (const med of activeMeds) {
-                const times = med.schedules && med.schedules.length > 0 ? med.schedules : ['08:00'];
-                for (const time of times) {
-                    const alreadyLogged = todayLogs.some(l => l.medication_id === med.id && l.scheduled_time === time);
-                    if (!alreadyLogged) {
-                        const [tH, tM] = time.split(':').map(Number);
-                        const isDue = (now.getHours() > tH) || (now.getHours() === tH && now.getMinutes() >= tM);
-                        
-                        if (isDue) {
-                            setActiveMedReminder({
-                                medId: med.id,
-                                medName: med.medication_name,
-                                dosage: med.dosage,
-                                time: time,
-                            });
+            // 1. AVISOS DE CONSULTAS
+            for (const apt of upcomingAppointments) {
+                if (apt.status === 'Agendada' || apt.status === 'Confirmada') {
+                    const aptDate = apt.appointment_date ? apt.appointment_date.split('T')[0] : '';
+                    if (aptDate === todayStr) {
+                        const [aH, aM] = (apt.appointment_time || '00:00').slice(0, 5).split(':').map(Number);
+                        const aptTimeInMinutes = aH * 60 + aM;
+                        const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+                        const diffMinutes = aptTimeInMinutes - nowInMinutes;
 
-                            if ('Notification' in window && Notification.permission === 'granted') {
-                                new Notification(`💊 Lembrete: ${med.medication_name}`, {
-                                    body: `Horário: ${time} • ${med.dosage}. Não esqueça de tomar sua medicação!`,
-                                    icon: '/elyon-logo.jpg',
-                                });
+                        // Se a consulta é hoje e falta entre 0 e 60 minutos
+                        if (diffMinutes >= 0 && diffMinutes <= 60) {
+                            const notifTitle = `📅 Consulta de ${apt.specialty} em Breve`;
+                            const notifMessage = `Sua consulta com ${apt.doctor_name} (${apt.type}) está marcada para às ${apt.appointment_time.slice(0, 5)} (em ${diffMinutes === 0 ? 'instantes' : `${diffMinutes} min`}).`;
+
+                            if (!notifications.some(n => n.message === notifMessage)) {
+                                if ('Notification' in window && Notification.permission === 'granted') {
+                                    new Notification(notifTitle, { body: notifMessage, icon: '/elyon-logo.jpg' });
+                                }
+                                await createNotification(loggedPatient.id, notifMessage, 'consulta', notifTitle, apt.id);
+                                refreshPatientData();
                             }
-
-                            const notifText = `Lembrete: Tomar ${med.medication_name} (${med.dosage}) programado para às ${time}.`;
-                            setNotifications(prev => {
-                                if (prev.some(n => n.message === notifText)) return prev;
-                                return [{
-                                    id: `med-${Date.now()}`,
-                                    patient_id: loggedPatient.id,
-                                    title: 'Lembrete de Medicação',
-                                    message: notifText,
-                                    type: 'medicamento' as const,
-                                    reference_id: null,
-                                    read: false,
-                                    read_at: null,
-                                    created_at: new Date().toISOString(),
-                                }, ...prev];
-                            });
-                            return;
                         }
+                    }
+                }
+            }
+
+            // 2. AVISOS DE MEDICAMENTOS (Com Popup + Notificação)
+            if (medications.length > 0) {
+                const todayLogs = await listTodayMedicationLogs(loggedPatient.id);
+                const activeMeds = medications.filter(m => m.active);
+
+                for (const med of activeMeds) {
+                    const times = med.schedules && med.schedules.length > 0 ? med.schedules : ['08:00'];
+                    for (const time of times) {
+                        const alreadyLogged = todayLogs.some(l => l.medication_id === med.id && l.scheduled_time === time);
+                        if (!alreadyLogged) {
+                            const [tH, tM] = time.split(':').map(Number);
+                            const isDue = (now.getHours() > tH) || (now.getHours() === tH && now.getMinutes() >= tM);
+
+                            if (isDue) {
+                                setActiveMedReminder({
+                                    medId: med.id,
+                                    medName: med.medication_name,
+                                    dosage: med.dosage,
+                                    time: time,
+                                });
+
+                                const notifTitle = `💊 Hora do Remédio: ${med.medication_name}`;
+                                const notifText = `Horário: ${time} • ${med.dosage || ''}. Tome sua medicação para manter o tratamento em dia.`;
+
+                                if (!notifications.some(n => n.message === notifText)) {
+                                    if ('Notification' in window && Notification.permission === 'granted') {
+                                        new Notification(notifTitle, { body: notifText, icon: '/elyon-logo.jpg' });
+                                    }
+                                    await createNotification(loggedPatient.id, notifText, 'medicamento', notifTitle, med.id);
+                                    refreshPatientData();
+                                }
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. AVISOS DE EXAMES LIBERADOS
+            for (const ex of patientExams) {
+                if (ex.status === 'Resultado Disponível') {
+                    const notifTitle = `🔬 Resultado Disponível: ${ex.name}`;
+                    const notifText = `O laudo do seu exame ${ex.name} já está disponível para visualização.`;
+                    if (!notifications.some(n => n.message === notifText)) {
+                        if ('Notification' in window && Notification.permission === 'granted') {
+                            new Notification(notifTitle, { body: notifText, icon: '/elyon-logo.jpg' });
+                        }
+                        await createNotification(loggedPatient.id, notifText, 'exame', notifTitle, ex.id);
+                        refreshPatientData();
                     }
                 }
             }
         };
 
         checkReminders();
-        const interval = setInterval(checkReminders, 30000);
+        const interval = setInterval(checkReminders, 20000); // Checa a cada 20s
         return () => clearInterval(interval);
-    }, [loggedPatient, medications]);
+    }, [loggedPatient, medications, upcomingAppointments, patientExams, notifications, refreshPatientData]);
 
     const handleTakeReminder = async (medId: string, time: string) => {
         if (!loggedPatient) return;
