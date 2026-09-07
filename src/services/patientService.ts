@@ -361,9 +361,12 @@ export async function listVitalSigns(patientId: string, limit = 20): Promise<Vit
     return data as VitalSign[];
 }
 
-export async function getLatestVitalSign(patientId: string): Promise<VitalSign | null> {
-    const list = await listVitalSigns(patientId, 1);
-    return list.length > 0 ? list[0] : null;
+export async function deleteVitalSign(id: string): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_vitals')
+        .delete()
+        .eq('id', id);
+    return !error;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════
@@ -589,6 +592,14 @@ export async function cancelAppointment(id: string): Promise<boolean> {
     return updateAppointmentStatus(id, 'Cancelada');
 }
 
+export async function deleteAppointment(id: string): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_appointments')
+        .delete()
+        .eq('id', id);
+    return !error;
+}
+
 // ── Exams ────────────────────────────────────────────────────────────────────────
 export interface Exam {
     id: string;
@@ -629,6 +640,14 @@ export async function addExam(exam: ExamInsert): Promise<{ data: Exam | null; er
         .single();
     if (error) return { data: null, error: error.message };
     return { data: data as Exam, error: null };
+}
+
+export async function deleteExam(id: string): Promise<boolean> {
+    const { error } = await supabasePatients
+        .from('patient_exams')
+        .delete()
+        .eq('id', id);
+    return !error;
 }
 
 export async function updateExamStatus(id: string, status: Exam['status'], resultSummary?: string): Promise<boolean> {

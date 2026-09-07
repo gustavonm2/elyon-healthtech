@@ -14,9 +14,9 @@ import {
     listMedications, addMedication, toggleMedication, deleteMedication,
     getHealthProfile, upsertHealthProfile, logLizInteraction,
     listTodayMedicationLogs, logMedicationStatus, getMedicationAdherence,
-    listVitalSigns,
-    listUpcomingAppointments, listPastAppointments, addAppointment,
-    listExams,
+    listVitalSigns, deleteVitalSign,
+    listUpcomingAppointments, listPastAppointments, addAppointment, deleteAppointment,
+    listExams, addExam, deleteExam,
     listNotifications, markAllNotificationsRead, createNotification,
     type Patient, type PatientInsert, type Medication, type MedicationInsert,
     type HealthProfile, type VitalSign, type MedicationLog,
@@ -155,7 +155,11 @@ function buildClinicalContext(
         patientAge: patient.age,
         bloodType: patient.bloodType,
         nextAppointment: nextApt
-            ? `${nextApt.specialty} com ${nextApt.doctor_name} em ${new Date(nextApt.appointment_date).toLocaleDateString('pt-BR')} às ${nextApt.appointment_time.slice(0, 5)} (${nextApt.type})`
+            ? (() => {
+                const [y, m, d] = (nextApt.appointment_date || '').split('T')[0].split('-');
+                const dtStr = y && m && d ? `${d}/${m}/${y}` : nextApt.appointment_date;
+                return `${nextApt.specialty} com ${nextApt.doctor_name} em ${dtStr} às ${nextApt.appointment_time.slice(0, 5)} (${nextApt.type})`;
+            })()
             : 'Nenhuma consulta agendada',
         activeMeds: activeMeds.length,
         activeMedsList: activeMeds.map((m) => `${m.medication_name} - ${m.dosage || ''} (Horários: ${(m.schedules || []).join(', ') || '08:00'})`),
@@ -632,7 +636,14 @@ export const PatientApp: React.FC = () => {
                             patientName={patientDisplayData.name}
                             onVitalSaved={refreshPatientData} />
                     )}
-                    {screen === 'exames' && <ExamesScreen navigateTo={navigateTo} exams={patientExams} />}
+                    {screen === 'exames' && (
+                        <ExamesScreen
+                            navigateTo={navigateTo}
+                            exams={patientExams}
+                            patientId={loggedPatient?.id || null}
+                            onExamUpdated={refreshPatientData}
+                        />
+                    )}
                     {screen === 'telemedicina' && loggedPatient && (
                         <TelemedicinaScreen navigateTo={navigateTo} patientId={loggedPatient.id} patientName={patientDisplayData.name} latestVitals={latestVitals} />
                     )}
@@ -1929,16 +1940,21 @@ const HomeScreen: React.FC<{
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs text-slate-500 font-medium">Próxima consulta</p>
-                            {upcomingAppointments.length > 0 ? (
-                                <>
-                                    <p className="text-sm font-bold text-slate-900 mt-0.5">
-                                        {upcomingAppointments[0].specialty} • <span className="text-slate-500 font-normal">{upcomingAppointments[0].doctor_name}</span>
-                                    </p>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                        {new Date(upcomingAppointments[0].appointment_date).toLocaleDateString('pt-BR')} às {upcomingAppointments[0].appointment_time.slice(0, 5)}
-                                    </p>
-                                </>
-                            ) : (
+                            {upcomingAppointments.length > 0 ? (() => {
+                                const nextApt = upcomingAppointments[0];
+                                const [y, m, d] = (nextApt.appointment_date || '').split('T')[0].split('-');
+                                const dateFormatted = y && m && d ? `${d}/${m}/${y}` : nextApt.appointment_date;
+                                return (
+                                    <>
+                                        <p className="text-sm font-bold text-slate-900 mt-0.5">
+                                            {nextApt.specialty} • <span className="text-slate-500 font-normal">{nextApt.doctor_name}</span>
+                                        </p>
+                                        <p className="text-xs text-slate-400 mt-0.5">
+                                            {dateFormatted} às {nextApt.appointment_time.slice(0, 5)}
+                                        </p>
+                                    </>
+                                );
+                            })() : (
                                 <p className="text-sm text-slate-400 mt-0.5">Nenhuma consulta agendada</p>
                             )}
                         </div>
@@ -2042,33 +2058,76 @@ const ConsultasScreen: React.FC<{
                         <p className="text-sm text-slate-400">Nenhuma consulta agendada</p>
                         <button onClick={() => setShowModal(true)} className="mt-3 text-xs font-bold text-[#1D3461] hover:underline">Agendar agora →</button>
                     </div>
-                ) : upcomingAppointments.map((apt) => (
-                    <div key={apt.id} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm">
-                        <div className="flex items-start justify-between mb-2">
-                            <div><p className="text-sm font-bold text-slate-900">{apt.specialty}</p><p className="text-xs text-slate-500">{apt.doctor_name}</p></div>
-                            <StatusBadge status={apt.status} />
+                ) : upcomingAppointments.map((apt) => {
+                    // Formata a data sem sofrer deslocamento de fuso horário
+                    const [y, m, d] = (apt.appointment_date || '').split('T')[0].split('-');
+                    const dateFormatted = y && m && d ? `${d}/${m}/${y}` : apt.appointment_date;
+
+                    return (
+                        <div key={apt.id} className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-sm font-bold text-slate-900 truncate">{apt.specialty}</p>
+                                    <StatusBadge status={apt.status} />
+                                </div>
+                                <p className="text-xs text-slate-500 mb-2">{apt.doctor_name}</p>
+                                <div className="flex items-center gap-3 text-xs text-slate-600 flex-wrap">
+                                    <span className="flex items-center gap-1 font-semibold text-slate-800"><Calendar className="w-3.5 h-3.5 text-blue-600" /> {dateFormatted}</span>
+                                    <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-slate-400" /> {apt.appointment_time.slice(0, 5)}</span>
+                                    <span className="flex items-center gap-1">{apt.type === 'Teleconsulta' ? <Video className="w-3.5 h-3.5 text-blue-500" /> : <MapPin className="w-3.5 h-3.5 text-slate-400" />}{apt.type}</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm(`Deseja cancelar a consulta de ${apt.specialty}?`)) {
+                                        await deleteAppointment(apt.id);
+                                        onAppointmentAdded();
+                                    }
+                                }}
+                                title="Excluir agendamento"
+                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition flex-shrink-0"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-slate-600">
-                            <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {new Date(apt.appointment_date).toLocaleDateString('pt-BR')}</span>
-                            <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {apt.appointment_time.slice(0, 5)}</span>
-                            <span className="flex items-center gap-1">{apt.type === 'Teleconsulta' ? <Video className="w-3.5 h-3.5 text-blue-500" /> : <MapPin className="w-3.5 h-3.5" />}{apt.type}</span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Histórico</h2>
             <div className="space-y-2.5">
                 {pastAppointments.length === 0 ? (
                     <p className="text-xs text-slate-400 text-center py-4">Nenhum histórico de consultas.</p>
-                ) : pastAppointments.map((h) => (
-                    <div key={h.id} className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                        <div className="flex items-center justify-between mb-1"><p className="text-sm font-bold text-slate-800">{h.specialty}</p><span className="text-[10px] text-slate-500">{new Date(h.appointment_date).toLocaleDateString('pt-BR')}</span></div>
-                        <p className="text-xs text-slate-500 mb-1">{h.doctor_name}</p>
-                        {h.chief_complaint && <p className="text-xs text-slate-600 leading-relaxed">{h.chief_complaint}</p>}
-                        <StatusBadge status={h.status} />
-                    </div>
-                ))}
+                ) : pastAppointments.map((h) => {
+                    const [y, m, d] = (h.appointment_date || '').split('T')[0].split('-');
+                    const dateFormatted = y && m && d ? `${d}/${m}/${y}` : h.appointment_date;
+
+                    return (
+                        <div key={h.id} className="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1">
+                                    <p className="text-sm font-bold text-slate-800">{h.specialty}</p>
+                                    <span className="text-[10px] text-slate-500">{dateFormatted}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mb-1">{h.doctor_name}</p>
+                                {h.chief_complaint && <p className="text-xs text-slate-600 leading-relaxed">{h.chief_complaint}</p>}
+                                <StatusBadge status={h.status} />
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm('Deseja excluir este registro do histórico?')) {
+                                        await deleteAppointment(h.id);
+                                        onAppointmentAdded();
+                                    }
+                                }}
+                                title="Excluir histórico"
+                                className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                            >
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
 
             {/* ═══ MODAL DE AGENDAMENTO ═══ */}
@@ -2151,32 +2210,175 @@ const ConsultasScreen: React.FC<{
 // ══════════════════════════════════════════════════════════════════════════════════
 //  SCREEN: EXAMES
 // ══════════════════════════════════════════════════════════════════════════════════
-const ExamesScreen: React.FC<{ navigateTo: (s: AppScreen) => void; exams: Exam[] }> = ({ navigateTo, exams }) => (
-    <div className="px-5 pt-12 pb-4">
-        <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => navigateTo('home')} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 transition"><ArrowLeft className="w-5 h-5 text-slate-800" /></button>
-            <h1 className="text-lg font-bold text-slate-900">Meus Exames</h1>
-        </div>
-        <div className="space-y-3">
-            {exams.length === 0 ? (
-                <div className="text-center py-12">
-                    <FlaskConical className="w-10 h-10 text-slate-200 mx-auto mb-2" />
-                    <p className="text-sm text-slate-400">Nenhum exame registrado</p>
+const ExamesScreen: React.FC<{
+    navigateTo: (s: AppScreen) => void;
+    exams: Exam[];
+    patientId: string | null;
+    onExamUpdated: () => void;
+}> = ({ navigateTo, exams, patientId, onExamUpdated }) => {
+    const [showModal, setShowModal] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [form, setForm] = useState({
+        name: '',
+        category: 'Laboratorial' as Exam['category'],
+        doctor_name: '',
+        request_date: new Date().toISOString().split('T')[0],
+    });
+
+    const handleAdd = async () => {
+        if (!form.name.trim() || !patientId) return;
+        setSaving(true);
+        await addExam({
+            patient_id: patientId,
+            name: form.name.trim(),
+            category: form.category,
+            doctor_name: form.doctor_name.trim() || null,
+            request_date: form.request_date,
+            scheduled_date: null,
+            scheduled_location: null,
+            status: 'Pendente',
+            laboratory_name: null,
+            result_summary: null,
+            result_file_url: null,
+            has_abnormalities: false,
+            notes: null,
+        });
+        setSaving(false);
+        setShowModal(false);
+        setForm({ name: '', category: 'Laboratorial', doctor_name: '', request_date: new Date().toISOString().split('T')[0] });
+        onExamUpdated();
+    };
+
+    return (
+        <div className="px-5 pt-12 pb-4">
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigateTo('home')} className="p-2 -ml-2 rounded-xl hover:bg-slate-100 transition"><ArrowLeft className="w-5 h-5 text-slate-800" /></button>
+                    <h1 className="text-lg font-bold text-slate-900">Meus Exames</h1>
                 </div>
-            ) : exams.map((ex) => (
-                <div key={ex.id} className={`bg-white rounded-2xl border p-4 shadow-sm ${ex.status === 'Resultado Disponível' ? 'border-emerald-200' : 'border-slate-100'}`}>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${ex.status === 'Resultado Disponível' ? 'bg-emerald-50' : 'bg-amber-50'}`}>
-                            <FlaskConical className={`w-5 h-5 ${ex.status === 'Resultado Disponível' ? 'text-emerald-600' : 'text-amber-600'}`} />
-                        </div>
-                        <div><p className="text-sm font-bold text-slate-900">{ex.name}</p><p className="text-xs text-slate-500">{ex.doctor_name || 'Médico não informado'}</p></div>
+                <button
+                    onClick={() => setShowModal(true)}
+                    className="px-4 py-2 bg-[#1D3461] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 hover:bg-[#162749] transition"
+                >
+                    <Plus className="w-3.5 h-3.5" /> Adicionar
+                </button>
+            </div>
+
+            <div className="space-y-3">
+                {exams.length === 0 ? (
+                    <div className="text-center py-12">
+                        <FlaskConical className="w-10 h-10 text-slate-200 mx-auto mb-2" />
+                        <p className="text-sm text-slate-400">Nenhum exame registrado</p>
+                        <button onClick={() => setShowModal(true)} className="mt-3 text-xs font-bold text-[#1D3461] hover:underline">Adicionar exame →</button>
                     </div>
-                    <div className="flex items-center justify-between"><span className="text-[10px] text-slate-400">{new Date(ex.request_date).toLocaleDateString('pt-BR')}</span><StatusBadge status={ex.status} /></div>
+                ) : exams.map((ex) => {
+                    const [y, m, d] = (ex.request_date || '').split('T')[0].split('-');
+                    const dateFormatted = y && m && d ? `${d}/${m}/${y}` : ex.request_date;
+
+                    return (
+                        <div key={ex.id} className={`bg-white rounded-2xl border p-4 shadow-sm flex items-start justify-between gap-3 ${ex.status === 'Resultado Disponível' ? 'border-emerald-200' : 'border-slate-100'}`}>
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${ex.status === 'Resultado Disponível' ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+                                    <FlaskConical className={`w-5 h-5 ${ex.status === 'Resultado Disponível' ? 'text-emerald-600' : 'text-amber-600'}`} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-slate-900 truncate">{ex.name}</p>
+                                    <p className="text-xs text-slate-500">{ex.doctor_name || 'Médico não informado'} • <span className="text-slate-400">{ex.category}</span></p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <span className="text-[10px] text-slate-400">{dateFormatted}</span>
+                                        <StatusBadge status={ex.status} />
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    if (window.confirm(`Deseja excluir o exame ${ex.name}?`)) {
+                                        await deleteExam(ex.id);
+                                        onExamUpdated();
+                                    }
+                                }}
+                                title="Excluir exame"
+                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition flex-shrink-0"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Modal de Adicionar Exame */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center" onClick={() => setShowModal(false)}>
+                    <div className="w-full max-w-md bg-white rounded-t-3xl p-6 pb-8 space-y-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                <FlaskConical className="w-5 h-5 text-[#1D3461]" /> Novo Exame
+                            </h2>
+                            <button onClick={() => setShowModal(false)} className="p-1 hover:bg-slate-100 rounded-lg transition"><XIcon className="w-5 h-5 text-slate-400" /></button>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-700 mb-1.5 block">Nome do Exame *</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: Hemograma Completo, Ecocardiograma..."
+                                value={form.name}
+                                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#1D3461]/20 focus:border-[#1D3461] outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-700 mb-1.5 block">Categoria</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {(['Laboratorial', 'Imagem', 'Cardiológico', 'Outros'] as const).map(cat => (
+                                    <button
+                                        key={cat}
+                                        type="button"
+                                        onClick={() => setForm(f => ({ ...f, category: cat }))}
+                                        className={`py-2 px-3 rounded-xl text-xs font-semibold border transition ${form.category === cat ? 'bg-[#1D3461] text-white border-[#1D3461]' : 'bg-white text-slate-600 border-slate-200'}`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-700 mb-1.5 block">Médico Solicitante</label>
+                            <input
+                                type="text"
+                                placeholder="Ex: Dra. Ana Paula"
+                                value={form.doctor_name}
+                                onChange={e => setForm(f => ({ ...f, doctor_name: e.target.value }))}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#1D3461]/20 focus:border-[#1D3461] outline-none"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-slate-700 mb-1.5 block">Data da Solicitação</label>
+                            <input
+                                type="date"
+                                value={form.request_date}
+                                onChange={e => setForm(f => ({ ...f, request_date: e.target.value }))}
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-[#1D3461]/20 focus:border-[#1D3461] outline-none"
+                            />
+                        </div>
+
+                        <button
+                            onClick={handleAdd}
+                            disabled={!form.name.trim() || saving}
+                            className="w-full py-3.5 bg-[#1D3461] hover:bg-[#162749] text-white font-bold text-sm rounded-2xl transition disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+                        >
+                            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : 'Cadastrar Exame'}
+                        </button>
+                    </div>
                 </div>
-            ))}
+            )}
         </div>
-    </div>
-);
+    );
+};
 
 // ══════════════════════════════════════════════════════════════════════════════════
 //  SCREEN: TELEMEDICINA (Teleconsulta Imediata com Triagem)

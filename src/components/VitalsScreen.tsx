@@ -5,7 +5,7 @@ import {
     Loader2, Trash2, TrendingUp, Sparkles, Shield
 } from 'lucide-react';
 import {
-    addVitalSign, listVitalSigns, type VitalSign, type VitalSignInsert
+    addVitalSign, listVitalSigns, deleteVitalSign, type VitalSign, type VitalSignInsert
 } from '../services/patientService';
 
 interface VitalsScreenProps {
@@ -258,11 +258,26 @@ export const VitalsScreen: React.FC<VitalsScreenProps> = ({
                                             <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                             <span className="text-xs font-bold text-slate-800">{formattedDate} às {formattedTime}</span>
                                         </div>
-                                        {bp.alert && (
-                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                                <AlertCircle className="w-3 h-3" /> Atenção PA
-                                            </span>
-                                        )}
+                                        <div className="flex items-center gap-2">
+                                            {bp.alert && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                                    <AlertCircle className="w-3 h-3" /> Atenção PA
+                                                </span>
+                                            )}
+                                            <button
+                                                onClick={async () => {
+                                                    if (window.confirm('Deseja excluir esta medição de sinais vitais?')) {
+                                                        await deleteVitalSign(item.id);
+                                                        loadData();
+                                                        onVitalSaved?.();
+                                                    }
+                                                }}
+                                                title="Excluir medição"
+                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Grid of values */}
