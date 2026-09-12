@@ -1,5 +1,43 @@
 @import "tailwindcss";
 
+/* ── ELYON Landing Page Theme ── */
+@theme {
+  --color-elyon-bg: #040b16;
+  --color-elyon-surface: #0a1526;
+  --color-elyon-border: #1e293b;
+  --color-elyon-text: #f8fafc;
+  --color-elyon-muted: #94a3b8;
+  --color-elyon-accent: #ffffff;
+  --color-elyon-blue: #38bdf8;
+  --color-elyon-blue-deep: #0284c7;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+  --animate-gradient-shift: gradient-shift 8s ease infinite;
+  --animate-fade-in-up: fade-in-up 0.8s ease-out forwards;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Default theme variables (Blue Clinical — overridden by ThemeContext) ── */
 :root {
   --color-primary:         #1D3461;
