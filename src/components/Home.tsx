@@ -1,490 +1,545 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Users, UserPlus, Building2, MessageSquare, Video, RefreshCw, BarChart2, LifeBuoy, Heart, Stethoscope, ClipboardList } from 'lucide-react';
+import { 
+    ArrowRight, Activity, Heart, Shield, Sparkles, MessageSquare, 
+    Calendar, CheckCircle2, ChevronRight, Zap, Stethoscope, 
+    FileText, UserPlus, Users, Pill, Clock
+} from 'lucide-react';
 
 const Home: React.FC = () => {
     const navigate = useNavigate();
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const [selectedOrbit, setSelectedOrbit] = useState<string>('LIZ (IA & Voz)');
 
-    React.useEffect(() => {
-        // Se o app foi aberto como atalho no iPhone ou PWA, redireciona automaticamente para o app do paciente
+    // Redirecionamento automático se aberto em modo PWA/Standalone no iPhone
+    useEffect(() => {
         const isStandalone = (window.navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
         if (isStandalone) {
             navigate('/app-paciente', { replace: true });
         }
     }, [navigate]);
 
+    // Canvas Interativo de Partículas Futuristas
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let animationFrameId: number;
+        let width = (canvas.width = window.innerWidth);
+        let height = (canvas.height = window.innerHeight);
+
+        const handleResize = () => {
+            if (!canvas) return;
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        };
+        window.addEventListener('resize', handleResize);
+
+        const particles: Array<{
+            x: number;
+            y: number;
+            vx: number;
+            vy: number;
+            radius: number;
+            alpha: number;
+        }> = [];
+
+        const count = Math.min(45, Math.floor(width / 35));
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.35,
+                vy: (Math.random() - 0.5) * 0.35,
+                radius: Math.random() * 2 + 1,
+                alpha: Math.random() * 0.4 + 0.2,
+            });
+        }
+
+        const render = () => {
+            ctx.clearRect(0, 0, width, height);
+
+            // Conexões neurais
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 130) {
+                        ctx.strokeStyle = `rgba(56, 189, 248, ${0.15 * (1 - dist / 130)})`;
+                        ctx.lineWidth = 0.75;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Partículas
+            for (const p of particles) {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0) p.x = width;
+                if (p.x > width) p.x = 0;
+                if (p.y < 0) p.y = height;
+                if (p.y > height) p.y = 0;
+
+                ctx.fillStyle = `rgba(56, 189, 248, ${p.alpha})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            animationFrameId = requestAnimationFrame(render);
+        };
+
+        render();
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
     return (
-        <div className="min-h-screen bg-[#F0F4F8] font-['Inter',sans-serif] text-slate-900">
+        <div className="min-h-screen bg-[#050811] text-[#f8fafc] font-['Plus_Jakarta_Sans',sans-serif] selection:bg-[#38bdf8] selection:text-[#050811] relative overflow-x-hidden">
+            {/* Canvas de Fundo */}
+            <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[1] opacity-40" />
 
-            {/* ===== NAVBAR ===== */}
-            <nav className="bg-white fixed w-full z-50 shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                    {/* Logo */}
+            {/* ===== 1. NAVBAR ===== */}
+            <nav className="fixed top-0 left-0 w-full z-50 py-4 px-6 md:px-12 bg-[#050811]/75 backdrop-blur-2xl border-b border-white/[0.06] transition-all">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    {/* Brand */}
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                        <div className="w-10 h-10 rounded-2xl overflow-hidden border border-[#38bdf8]/30 shadow-[0_0_20px_rgba(56,189,248,0.25)] flex items-center justify-center bg-[#0a0f1d]">
+                            <img src="/elyon-logo.jpg" alt="ELYON" className="w-full h-full object-cover" />
+                        </div>
+                        <span className="font-['Space_Grotesk',monospace] font-bold text-xl tracking-[0.18em] text-white">
+                            ELYON
+                        </span>
+                    </div>
+
+                    {/* Links de Navegação */}
+                    <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+                        <a href="#solucao" className="hover:text-white transition-colors">A Solução</a>
+                        <a href="#ecossistema" className="hover:text-white transition-colors">Ecossistema</a>
+                        <a href="#liz" className="hover:text-white transition-colors">LIZ (IA)</a>
+                        <a href="#jornada" className="hover:text-white transition-colors">Jornada</a>
+                    </div>
+
+                    {/* Ações */}
                     <div className="flex items-center gap-3">
-                        <img
-                            src="/src/assets/sci-logo-clean.png"
-                            alt="SCI Logo"
-                            className="w-12 h-12 object-contain"
-                            style={{ mixBlendMode: 'multiply' }}
-                        />
-                        <span className="font-bold text-base text-[#1D3461] tracking-wide">Pareceres Médicos</span>
-                    </div>
-
-                    {/* Nav Links */}
-                    <div className="hidden md:flex items-center gap-6 font-semibold text-sm text-[#1E293B]">
-                        <a href="#como-funciona" className="hover:text-[#1D3461] transition-colors">Como funciona</a>
-                        <a href="#solucoes" className="hover:text-[#1D3461] transition-colors">Soluções</a>
-                        <a href="#contato" className="hover:text-[#1D3461] transition-colors">Contato</a>
-                        <button
-                            onClick={() => navigate('/app-paciente')}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-full text-sm transition-all shadow-md shadow-emerald-600/20"
-                        >
-                            App Paciente (LIZ)
-                        </button>
                         <button
                             onClick={() => navigate('/login')}
-                            className="bg-[#1D3461] hover:bg-[#162749] text-white font-bold px-5 py-2.5 rounded-full text-sm transition-all"
+                            className="hidden sm:inline-flex px-5 py-2.5 rounded-full border border-white/10 hover:border-white/30 bg-white/[0.02] text-slate-200 text-xs font-semibold hover:bg-white/[0.06] transition-all"
                         >
-                            Acesso Restrito <ArrowRight className="inline w-4 h-4 ml-1" />
+                            Acesso Clínico
                         </button>
-                    </div>
-
-                    {/* Mobile access button */}
-                    <div className="flex items-center gap-2 md:hidden">
                         <button
                             onClick={() => navigate('/app-paciente')}
-                            className="bg-emerald-600 text-white font-bold px-3 py-1.5 rounded-full text-xs"
+                            className="px-5 py-2.5 rounded-full bg-white hover:bg-slate-100 text-[#050811] text-xs font-bold transition-all shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:scale-105 active:scale-95 flex items-center gap-2"
                         >
-                            App Paciente
-                        </button>
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="bg-[#1D3461] text-white font-bold px-3 py-1.5 rounded-full text-xs"
-                        >
-                            Acessar
+                            <Heart className="w-3.5 h-3.5 text-[#0284c7] fill-[#0284c7]" />
+                            Abrir App Paciente
                         </button>
                     </div>
                 </div>
             </nav>
 
-            {/* ===== HERO SECTION ===== */}
-            <section className="pt-20 bg-white">
-                <div className="flex flex-col lg:flex-row" style={{ minHeight: '480px' }}>
-                        {/* Left: Image */}
-                        <div className="lg:w-1/2 relative min-h-[380px]">
-                            <img
-                                src="/doctor_hero.png"
-                                alt="Médico usando o SCI"
-                                className="w-full h-full object-cover object-top"
-                                style={{ minHeight: '480px' }}
-                            />
-                        </div>
-
-                        {/* Right: Text */}
-                        <div className="lg:w-1/2 px-12 py-16 flex flex-col justify-center bg-white">
-                            <p className="text-[#1D3461] text-xs font-bold tracking-widest uppercase mb-3">
-                                SCI — SISTEMA DE CUIDADO INTEGRADO
-                            </p>
-                            <h1 className="text-3xl lg:text-4xl font-extrabold text-[#0F172A] leading-tight mb-5">
-                                Agilidade que acelera decisões.<br />
-                                <span className="text-[#1D3461]">Segurança que sustenta cada conduta clínica.</span>
-                            </h1>
-                            <p className="text-base text-slate-500 leading-relaxed mb-8">
-                                Uma plataforma completa para gestão de interconsultas médicas — assíncronas, por vídeo ou presenciais — integrando prontuário, histórico clínico e rastreabilidade total em cada etapa do cuidado.
-                            </p>
-                            <div className="flex flex-wrap gap-3">
-                                <button
-                                    onClick={() => navigate('/app-paciente')}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-4 rounded-full flex items-center gap-2 transition-all shadow-lg shadow-emerald-600/25"
-                                >
-                                    <Heart className="w-5 h-5" /> Abrir App do Paciente (LIZ)
-                                </button>
-                                <button
-                                    onClick={() => navigate('/cadastro-clinica')}
-                                    className="border-2 border-[#1D3461] text-[#1D3461] hover:bg-[#EEF4FA] font-bold px-8 py-4 rounded-full flex items-center gap-2 transition-all"
-                                >
-                                    <Users className="w-5 h-5" /> Criar Clínica Virtual
-                                </button>
-                                <button
-                                    onClick={() => navigate('/cadastro')}
-                                    className="bg-[#9B1C2E] hover:bg-[#7A1525] text-white font-bold px-8 py-4 rounded-full flex items-center gap-2 transition-all shadow-lg shadow-red-900/25"
-                                >
-                                    <UserPlus className="w-5 h-5" /> Sou Paciente – Cadastrar-me
-                                </button>
-                            </div>
-                        </div>
-                </div>
-            </section>
-
-            {/* ===== SECTION 2: Para quem é o SCI ===== */}
-            <section className="py-20 bg-[#F0F4F8]">
-                <div className="px-8 lg:px-16">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl lg:text-4xl font-extrabold text-[#0F172A]">
-                            Uma solução para <span className="text-[#1D3461]">cada perfil</span>
-                        </h2>
-                        <p className="text-slate-500 mt-3 text-base max-w-xl mx-auto">
-                            Profissionais de saúde e pacientes em um único ecossistema digital.
-                        </p>
+            {/* ===== 2. HERO SECTION ===== */}
+            <section className="relative min-h-screen pt-36 pb-20 px-6 md:px-12 flex flex-col justify-center z-10 max-w-7xl mx-auto">
+                <div className="max-w-3xl">
+                    <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#38bdf8]/[0.08] border border-[#38bdf8]/25 text-[#38bdf8] text-xs font-['Space_Grotesk',monospace] uppercase tracking-wider mb-6">
+                        <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_10px_#38bdf8] animate-pulse" />
+                        CUIDADO EM SAÚDE CONECTADO
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
-                        {/* Card 1 — Clínicas */}
-                        <div className="bg-[#1E40AF] rounded-2xl p-8 relative flex flex-col justify-between min-h-[200px]">
-                            <div className="absolute -top-6 left-8">
-                                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                                    <img src="/testimonial_1.png" alt="Gestor de clínica" className="w-full h-full object-cover object-top" />
-                                </div>
-                            </div>
-                            <div className="mt-14">
-                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-2">Para clínicas, hospitais e profissionais autônomos</p>
-                                <p className="text-white text-lg font-bold leading-snug">
-                                    Crie sua clínica virtual, adicione pareceristas e triadores, configure a agenda de disponibilidade e acompanhe KPIs de resolutividade e tempo de resposta — tudo no Painel do Gestor.
-                                </p>
-                            </div>
-                            <div className="mt-6">
-                                <div className="w-9 h-9 rounded-full border-2 border-white/40 flex items-center justify-center">
-                                    <Building2 className="w-4 h-4 text-white" />
-                                </div>
-                            </div>
-                        </div>
+                    <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] mb-6 text-white">
+                        Consultas, exames e cuidado contínuo. <br />
+                        <span className="bg-gradient-to-r from-white via-slate-100 to-[#38bdf8] bg-clip-text text-transparent">
+                            Tudo em um só lugar.
+                        </span>
+                    </h1>
 
-                        {/* Card 2 — Pacientes */}
-                        <div className="bg-[#0369A1] rounded-2xl p-8 relative flex flex-col justify-between min-h-[200px]">
-                            <div className="absolute -top-6 left-8">
-                                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                                    <img src="/testimonial_2.png" alt="Paciente" className="w-full h-full object-cover object-top" />
-                                </div>
-                            </div>
-                            <div className="mt-14">
-                                <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-2">Para o paciente</p>
-                                <p className="text-white text-lg font-bold leading-snug">
-                                    Acesse seu prontuário digital, veja pareceres médicos emitidos, prescrições, solicitações de exames e o histórico completo de saúde — diretamente pelo Portal do Paciente.
-                                </p>
-                            </div>
-                            <div className="mt-6">
-                                <div className="w-9 h-9 rounded-full border-2 border-white/40 flex items-center justify-center">
-                                    <Heart className="w-4 h-4 text-white" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ===== SECTION 3: COMO FUNCIONA ===== */}
-            <section id="como-funciona" className="py-20 bg-white">
-                <div className="px-8 lg:px-20">
-                    <h2 className="text-3xl font-extrabold text-[#0F172A] text-center mb-20">Como funciona?</h2>
-
-                    {/* Steps grid – zigzag layout like reference */}
-                    <div className="flex flex-col gap-24">
-
-                        {/* Row 1 – Step 1 left, Step 2 right */}
-                        <div className="grid md:grid-cols-2 gap-16 items-center">
-                            {/* Step 1 */}
-                            <div className="flex flex-col items-center text-center relative">
-                                {/* Decorative shapes */}
-                                <div className="absolute -top-6 right-4 w-12 h-12 rounded-full bg-[#A8C4DA] opacity-70"></div>
-                                <div className="absolute -top-2 right-0 w-8 h-8 rounded bg-[#1D3461] opacity-50 rotate-12"></div>
-                                <div className="absolute top-8 -left-4 w-10 h-10 rounded-full bg-[#0EA5E9] opacity-40"></div>
-
-                                {/* Circle image */}
-                                <div className="relative mb-4">
-                                    <div className="w-52 h-52 rounded-full overflow-hidden border-8 border-[#EEF4FA] shadow-xl">
-                                        <img src="/doctor_hero.png" alt="IA Médica" className="w-full h-full object-cover object-top" />
-                                    </div>
-                                    {/* Number badge */}
-                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-[#1D3461] text-white font-extrabold text-lg flex items-center justify-center shadow-lg">
-                                        1
-                                    </div>
-                                </div>
-                                <h3 className="font-extrabold text-[#0F172A] mt-6 text-lg">Triagem & Cadastro</h3>
-                                <p className="text-slate-500 text-sm mt-2 max-w-xs">
-                                    O paciente se cadastra no portal e acessa a fila de espera. O triador recebe o caso, analisa o quadro clínico e encaminha para o especialista correto.
-                                </p>
-                            </div>
-
-                            {/* Step 2 */}
-                            <div className="flex flex-col items-center text-center relative">
-                                {/* Decorative shapes */}
-                                <div className="absolute -top-6 left-4 w-12 h-12 rounded-full bg-[#7DD3FC] opacity-60"></div>
-                                <div className="absolute top-4 -right-2 w-8 h-16 rounded-full bg-[#A8C4DA] opacity-60"></div>
-
-                                {/* Circle image */}
-                                <div className="relative mb-4">
-                                    <div className="w-52 h-52 rounded-full overflow-hidden border-8 border-[#EEF4FA] shadow-xl">
-                                        <img src="/doctor_phone.png" alt="Solicitação de parecer" className="w-full h-full object-cover object-center" />
-                                    </div>
-                                    {/* Number badge */}
-                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-[#1D3461] text-white font-extrabold text-lg flex items-center justify-center shadow-lg">
-                                        2
-                                    </div>
-                                </div>
-                                <h3 className="font-extrabold text-[#0F172A] mt-6 text-lg">Solicitação de Parecer</h3>
-                                <p className="text-slate-500 text-sm mt-2 max-w-xs">
-                                    O profissional solicitante abre um pedido de interconsulta com descrição clínica, prioridade (urgente / eletivo) e prazo. O parecerista recebe na Central de Pareceres.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Divider arrow */}
-                        <div className="flex justify-center -my-10">
-                            <div className="w-8 h-8 flex items-center justify-center">
-                                <svg viewBox="0 0 24 24" className="w-8 h-8 text-[#1D3461] fill-[#1D3461]">
-                                    <path d="M12 2L2 12h5v10h10V12h5z" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        {/* Row 2 – Step 4 left, Step 3 right */}
-                        <div className="grid md:grid-cols-2 gap-16 items-center">
-                            {/* Step 4 */}
-                            <div className="flex flex-col items-center text-center relative">
-                                {/* Decorative shapes */}
-                                <div className="absolute -top-6 right-2 w-16 h-8 rounded-full bg-[#A8C4DA] opacity-60"></div>
-                                <div className="absolute top-12 right-0 w-8 h-8 rounded-full bg-[#7DD3FC] opacity-50"></div>
-                                <div className="absolute -top-4 left-6 w-10 h-10 rounded bg-[#1E40AF] opacity-30 rotate-6"></div>
-
-                                {/* Circle image */}
-                                <div className="relative mb-4">
-                                    <div className="w-52 h-52 rounded-full overflow-hidden border-8 border-[#EEF4FA] shadow-xl">
-                                        <img src="/patient_happy.png" alt="Desfecho clínico" className="w-full h-full object-cover object-top" />
-                                    </div>
-                                    {/* Number badge */}
-                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-[#1D3461] text-white font-extrabold text-lg flex items-center justify-center shadow-lg">
-                                        4
-                                    </div>
-                                </div>
-                                <h3 className="font-extrabold text-[#0F172A] mt-6 text-lg">Desfecho Clínico & Prontuário</h3>
-                                <p className="text-slate-500 text-sm mt-2 max-w-xs">
-                                    O parecer fica registrado no prontuário do paciente. Prescrições e exames são emitidos digitalmente e disponibilizados diretamente no Portal do Paciente.
-                                </p>
-                            </div>
-
-                            {/* Step 3 */}
-                            <div className="flex flex-col items-center text-center relative">
-                                {/* Decorative shapes */}
-                                <div className="absolute -top-4 left-2 w-10 h-10 rounded-full bg-[#1D3461] opacity-20"></div>
-                                <div className="absolute top-0 right-6 w-14 h-7 rounded-full bg-[#7DD3FC] opacity-50"></div>
-
-                                {/* Circle image */}
-                                <div className="relative mb-4">
-                                    <div className="w-52 h-52 rounded-full overflow-hidden border-8 border-[#EEF4FA] shadow-xl">
-                                        <img src="/doctors_consulting.png" alt="Parecer assíncrono ou teleconsulta" className="w-full h-full object-cover object-center" />
-                                    </div>
-                                    {/* Number badge */}
-                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-[#1D3461] text-white font-extrabold text-lg flex items-center justify-center shadow-lg">
-                                        3
-                                    </div>
-                                </div>
-                                <h3 className="font-extrabold text-[#0F172A] mt-6 text-lg">Parecer Assíncrono ou Teleconsulta</h3>
-                                <p className="text-slate-500 text-sm mt-2 max-w-xs">
-                                    O parecerista responde por chat, já incluindo condutas e hipóteses diagnósticas nos resultados do parecer — sem necessidade de reunião em tempo real. O parecer é automaticamente registrado no prontuário e repassado ao paciente. Quando necessário, pode iniciar uma teleconsulta em vídeo.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* CTA button below steps */}
-                    <div className="flex justify-center mt-16">
-                        <button
-                            onClick={() => navigate('/cadastro-clinica')}
-                            className="bg-[#1D3461] hover:bg-[#162749] text-white font-bold px-10 py-4 rounded-full text-base transition-all shadow-lg shadow-[#1D3461]/25"
-                        >
-                            Criar minha Clínica Virtual
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            {/* ===== SECTION 4: Funcionalidades reais ===== */}
-            <section id="solucoes" className="py-16 bg-[#1E40AF]">
-                <div className="px-8 lg:px-20">
-                    <h2 className="text-2xl font-extrabold text-white text-center mb-4">
-                        Tudo que sua clínica precisa em uma plataforma
-                    </h2>
-                    <p className="text-white/60 text-center text-sm mb-14 max-w-xl mx-auto">
-                        Funcionalidades desenvolvidas para o fluxo real de interconsultas médicas.
+                    <p className="text-base sm:text-xl text-slate-400 font-normal leading-relaxed mb-10 max-w-2xl">
+                        A ELYON integra telemedicina instantânea, prontuário longitudinal e a LIZ — sua coordenadora de saúde por inteligência artificial para antecipar riscos e cuidar de você 24h por dia.
                     </p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-                        {/* Feature 1 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <Building2 className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Clínica Virtual</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                Crie seu grupo, adicione membros e configure tudo em minutos.
-                            </p>
-                        </div>
-
-                        {/* Feature 2 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <ClipboardList className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Central de Pareceres</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                Gerencie solicitações com prioridade, prazo e status em tempo real.
-                            </p>
-                        </div>
-
-                        {/* Feature 3 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <MessageSquare className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Parecer por Chat</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                Resposta assíncrona com condutas salvas no prontuário e repassadas ao paciente.
-                            </p>
-                        </div>
-
-                        {/* Feature 4 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <Video className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Teleconsulta em Vídeo</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                Médico e paciente se conectam diretamente, sem app externo.
-                            </p>
-                        </div>
-
-                        {/* Feature 5 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <RefreshCw className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Repasse de Caso</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                Transfira um caso a outro colega com justificativa obrigatória.
-                            </p>
-                        </div>
-
-                        {/* Feature 6 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <BarChart2 className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Dashboard de Gestão</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                KPIs de resolutividade, tempo de resposta e ocupação de agenda.
-                            </p>
-                        </div>
-
-                        {/* Feature 7 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <Stethoscope className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Prontuário Digital</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                Histórico, prescrições e exames acessíveis no portal do paciente.
-                            </p>
-                        </div>
-
-                        {/* Feature 8 */}
-                        <div className="flex flex-col items-center text-center gap-3">
-                            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
-                                <LifeBuoy className="w-7 h-7 text-white" strokeWidth={1.5} />
-                            </div>
-                            <p className="text-white font-bold text-sm">Suporte Técnico</p>
-                            <p className="text-white/60 text-xs leading-snug">
-                                Qualquer usuário pode abrir tickets. O Gestor Master responde diretamente.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ===== SECTION 5: Depoimentos ===== */}
-            <section className="py-20 bg-[#F0F4F8]">
-                <div className="px-8 lg:px-20">
-                    <h2 className="text-3xl font-extrabold text-[#0F172A] text-center mb-12">
-                        O que dizem os <span className="text-[#1D3461]">especialistas</span>
-                    </h2>
-
-                    <div className="grid md:grid-cols-2 gap-8">
-                        {/* Card 1 */}
-                        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 relative">
-                            <div className="text-[64px] font-serif text-[#A8C4DA] absolute top-4 left-6 leading-none select-none">"</div>
-                            <p className="text-slate-500 text-base italic relative z-10 mb-8 pt-6">
-                                Com o SCI, nosso fluxo de triagem ficou completamente digital. O parecerista recebe o caso na hora, o histórico está sempre disponível e nunca mais perdemos uma solicitação urgente.
-                            </p>
-                            <div className="flex items-center border-t border-slate-100 pt-6">
-                                <img src="/testimonial_1.png" alt="Enf. Renata Braga" className="w-14 h-14 rounded-full object-cover mr-4" />
-                                <div>
-                                    <h4 className="font-bold text-[#0F172A]">Enf. Renata Braga</h4>
-                                    <p className="text-sm text-slate-400">Coordenadora de UTI, Hospital São Marcos</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Card 2 */}
-                        <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 relative">
-                            <div className="text-[64px] font-serif text-[#A8C4DA] absolute top-4 left-6 leading-none select-none">"</div>
-                            <p className="text-slate-500 text-base italic relative z-10 mb-8 pt-6">
-                                O painel de gestão nos permite ver em tempo real quantos pareceres estão pendentes, qual é o tempo médio de resposta e a taxa de resolutividade da equipe. É governança clínica de verdade.
-                            </p>
-                            <div className="flex items-center border-t border-slate-100 pt-6">
-                                <img src="/testimonial_2.png" alt="Dr. Felipe Andrade" className="w-14 h-14 rounded-full object-cover object-top mr-4" />
-                                <div>
-                                    <h4 className="font-bold text-[#0F172A]">Dr. Felipe Andrade</h4>
-                                    <p className="text-sm text-slate-400">Gestor Assistencial, Clínica Integrada SP</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* ===== CTA FINAL ===== */}
-            <section id="contato" className="py-24 bg-[#0F172A] relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-[#1D3461]/20 blur-3xl pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 rounded-full bg-[#1E40AF]/30 blur-3xl pointer-events-none"></div>
-
-                <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-                    <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-6">
-                        Comece agora. É gratuito para criar sua clínica.
-                    </h2>
-                    <p className="text-slate-300 text-lg mb-10 max-w-2xl mx-auto">
-                        Configure sua clínica virtual, adicione sua equipe e comece a gerenciar pareceres hoje mesmo. Sem contrato, sem custo inicial.
-                    </p>
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
                         <button
-                            onClick={() => navigate('/cadastro-clinica')}
-                            className="bg-[#1D3461] hover:bg-[#162749] text-white font-bold text-base px-9 py-4 rounded-full transition-all shadow-xl shadow-[#1D3461]/20"
+                            onClick={() => navigate('/app-paciente')}
+                            className="px-8 py-4 rounded-full bg-white hover:bg-slate-100 text-[#050811] font-bold text-sm transition-all shadow-[0_10px_30px_rgba(255,255,255,0.18)] hover:-translate-y-0.5 flex items-center gap-2.5 group"
                         >
-                            Criar minha Clínica Virtual
+                            <span>Experimentar App do Paciente</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-[#0284c7]" />
                         </button>
+
                         <button
                             onClick={() => navigate('/cadastro')}
-                            className="bg-[#9B1C2E] hover:bg-[#7A1525] text-white font-bold text-base px-9 py-4 rounded-full transition-all shadow-xl shadow-red-900/20"
+                            className="px-7 py-4 rounded-full border border-white/15 hover:border-white/40 bg-white/[0.03] text-slate-200 font-semibold text-sm hover:bg-white/[0.08] transition-all flex items-center gap-2"
                         >
-                            <UserPlus className="inline w-4 h-4 mr-2" />Sou Paciente – Cadastrar-me
+                            <UserPlus className="w-4 h-4 text-[#38bdf8]" />
+                            Criar Conta Gratuita
                         </button>
+                    </div>
+
+                    {/* Métricas do Hero */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-12 mt-12 border-t border-white/[0.08]">
+                        <div>
+                            <p className="text-2xl sm:text-3xl font-bold font-['Space_Grotesk',monospace] text-white">100%</p>
+                            <p className="text-xs text-slate-400 mt-1">Jornada Clínica Integrada</p>
+                        </div>
+                        <div>
+                            <p className="text-2xl sm:text-3xl font-bold font-['Space_Grotesk',monospace] text-[#38bdf8]">24 / 7</p>
+                            <p className="text-xs text-slate-400 mt-1">Acompanhamento com a LIZ</p>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                            <p className="text-2xl sm:text-3xl font-bold font-['Space_Grotesk',monospace] text-emerald-400">&lt; 1 min</p>
+                            <p className="text-xs text-slate-400 mt-1">Triagem e Acolhimento</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===== 3. SEÇÃO COMPARATIVA: FRAGMENTAÇÃO VS ELYON ===== */}
+            <section id="solucao" className="relative z-10 py-24 px-6 md:px-12 max-w-7xl mx-auto">
+                <div className="text-center max-w-3xl mx-auto mb-16">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/20 text-[#38bdf8] text-xs font-['Space_Grotesk',monospace] uppercase tracking-wider mb-4">
+                        A EVOLUÇÃO DO CUIDADO
+                    </div>
+                    <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white mb-4">
+                        A saúde hoje é fragmentada. A ELYON conecta cada etapa.
+                    </h2>
+                    <p className="text-slate-400 text-sm sm:text-base">
+                        Veja a diferença entre o modelo tradicional isolado e uma experiência contínua com IA e prontuário integrado.
+                    </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Modelo Tradicional */}
+                    <div className="p-8 rounded-3xl bg-[#0a0f1d]/80 border border-red-500/20 backdrop-blur-xl relative">
+                        <div className="flex items-center gap-2 text-xs font-bold font-['Space_Grotesk',monospace] text-red-400 uppercase tracking-wider mb-6">
+                            <span className="w-2 h-2 rounded-full bg-red-400" />
+                            Modelo Tradicional Fragmentado
+                        </div>
+
+                        <div className="space-y-4 text-sm text-slate-400">
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
+                                <span className="w-6 h-6 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-xs flex-shrink-0">1</span>
+                                <p>Paciente consulta com um médico, mas o histórico fica preso no prontuário daquela clínica específica.</p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
+                                <span className="w-6 h-6 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-xs flex-shrink-0">2</span>
+                                <p>Exames são impressos em papel ou perdidos em múltiplos portais de laboratórios diferentes.</p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
+                                <span className="w-6 h-6 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-xs flex-shrink-0">3</span>
+                                <p>Ninguém acompanha o paciente em casa entre as consultas; adesão a medicamentos fica esquecida.</p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
+                                <span className="w-6 h-6 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center font-bold text-xs flex-shrink-0">4</span>
+                                <p>Sinais de descompensação e riscos só são descobertos quando o quadro já se agravou no pronto-socorro.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Modelo ELYON */}
+                    <div className="p-8 rounded-3xl bg-gradient-to-b from-[#0f172a]/90 to-[#0a1428]/95 border border-[#38bdf8]/40 shadow-[0_20px_50px_rgba(2,132,199,0.15)] relative">
+                        <div className="flex items-center gap-2 text-xs font-bold font-['Space_Grotesk',monospace] text-[#38bdf8] uppercase tracking-wider mb-6">
+                            <span className="w-2 h-2 rounded-full bg-[#38bdf8] shadow-[0_0_8px_#38bdf8]" />
+                            Ecossistema Integrado ELYON
+                        </div>
+
+                        <div className="space-y-4 text-sm text-slate-300">
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#38bdf8]/[0.06] border border-[#38bdf8]/20">
+                                <span className="w-6 h-6 rounded-full bg-[#0284c7] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                                <p><strong className="text-white">Prontuário Longitudinal:</strong> Todos os atendimentos, teleconsultas e prescrições sincronizados no seu perfil.</p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#38bdf8]/[0.06] border border-[#38bdf8]/20">
+                                <span className="w-6 h-6 rounded-full bg-[#0284c7] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                                <p><strong className="text-white">Central de Exames Inteligente:</strong> Resultados centralizados com análise de tendências de biomarcadores.</p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#38bdf8]/[0.06] border border-[#38bdf8]/20">
+                                <span className="w-6 h-6 rounded-full bg-[#0284c7] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                                <p><strong className="text-white">LIZ (Coordenadora de Cuidado):</strong> Lembretes de remédios no horário, avisos de consulta e acolhimento contínuo.</p>
+                            </div>
+                            <div className="flex items-start gap-3 p-3 rounded-2xl bg-[#38bdf8]/[0.06] border border-[#38bdf8]/20">
+                                <span className="w-6 h-6 rounded-full bg-[#0284c7] text-white flex items-center justify-center font-bold text-xs flex-shrink-0">✓</span>
+                                <p><strong className="text-white">Telemedicina com 1 Toque:</strong> Triagem ágil e consulta médica rápida direto pelo celular.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===== 4. ECOSSISTEMA ORBITAL ===== */}
+            <section id="ecossistema" className="relative z-10 py-24 px-6 md:px-12 max-w-7xl mx-auto">
+                <div className="text-center max-w-2xl mx-auto mb-16">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/20 text-[#38bdf8] text-xs font-['Space_Grotesk',monospace] uppercase tracking-wider mb-4">
+                        HUB CENTRAL DE SAÚDE
+                    </div>
+                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
+                        Um organismo vivo centrado no paciente
+                    </h2>
+                    <p className="text-slate-400 text-sm">
+                        Toque nos pilares para explorar como as especialidades e tecnologias se conectam na ELYON.
+                    </p>
+                </div>
+
+                {/* Stage do Ecossistema */}
+                <div className="relative h-[480px] sm:h-[540px] rounded-3xl border border-white/[0.08] bg-gradient-to-b from-[#0f1c3a] via-[#060a16] to-[#050811] flex items-center justify-center overflow-hidden shadow-2xl">
+                    {/* Anéis Orbitais */}
+                    <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-white/15 pointer-events-none animate-[spin_60s_linear_infinite]" />
+                    <div className="absolute w-[440px] h-[440px] rounded-full border border-dashed border-[#38bdf8]/15 pointer-events-none animate-[spin_90s_linear_infinite_reverse]" />
+
+                    {/* Centro: Paciente / ELYON */}
+                    <div className="w-36 h-36 rounded-full bg-white text-[#050811] flex flex-col items-center justify-center z-20 shadow-[0_0_60px_rgba(255,255,255,0.35)] text-center p-2">
+                        <img src="/elyon-logo.jpg" alt="ELYON" className="w-10 h-10 rounded-xl mb-1 object-cover shadow-sm" />
+                        <span className="font-['Space_Grotesk',monospace] font-black text-sm tracking-wider">ELYON</span>
+                        <span className="text-[9px] uppercase font-bold text-slate-600 tracking-wider">Você no Centro</span>
+                    </div>
+
+                    {/* Nós Orbitais */}
+                    {[
+                        { label: 'LIZ (IA & Voz)', pos: 'top-10 left-1/2 -translate-x-1/2', icon: MessageSquare },
+                        { label: 'Telemedicina', pos: 'bottom-12 left-1/2 -translate-x-1/2', icon: Activity },
+                        { label: 'Sinais Vitais', pos: 'top-1/2 -translate-y-1/2 left-6 sm:left-16', icon: Heart },
+                        { label: 'Prescrições', pos: 'top-1/2 -translate-y-1/2 right-6 sm:right-16', icon: Pill },
+                        { label: 'Prontuário Único', pos: 'top-24 left-16 sm:left-32', icon: FileText },
+                        { label: 'Central de Exames', pos: 'bottom-24 right-16 sm:right-32', icon: Stethoscope },
+                    ].map((node, i) => (
+                        <div
+                            key={i}
+                            onClick={() => setSelectedOrbit(node.label)}
+                            className={`absolute ${node.pos} px-4 py-2.5 rounded-full backdrop-blur-md border text-xs font-semibold flex items-center gap-2 cursor-pointer transition-all duration-300 z-30 hover:scale-110 active:scale-95 ${
+                                selectedOrbit === node.label 
+                                    ? 'bg-[#0284c7] text-white border-[#38bdf8] shadow-[0_0_25px_rgba(56,189,248,0.5)]' 
+                                    : 'bg-[#0f172a]/90 text-slate-200 border-white/15 hover:border-[#38bdf8]/60 hover:bg-[#0284c7]/20'
+                            }`}
+                        >
+                            <node.icon className="w-4 h-4 text-[#38bdf8]" />
+                            <span>{node.label}</span>
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* ===== 5. LIZ: A COORDENADORA DE CUIDADO IA ===== */}
+            <section id="liz" className="relative z-10 py-24 px-6 md:px-12 max-w-7xl mx-auto">
+                <div className="grid lg:grid-cols-2 gap-12 items-center bg-[#0a0f1d]/90 border border-white/[0.08] rounded-3xl p-8 sm:p-14 shadow-2xl">
+                    {/* Coluna 1: Apresentação */}
+                    <div>
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/20 text-[#38bdf8] text-xs font-['Space_Grotesk',monospace] uppercase tracking-wider mb-6">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            INTELIGÊNCIA CLÍNICA CONVERSACIONAL
+                        </div>
+
+                        <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white mb-6">
+                            Conheça a LIZ. Sua parceira contínua de saúde.
+                        </h2>
+
+                        <p className="text-slate-400 text-base leading-relaxed mb-8">
+                            A LIZ não é um chatbot genérico. Ela analisa em tempo real sua pressão, glicemia, horários dos medicamentos e consultas agendadas, oferecendo orientações humanizadas por áudio e texto.
+                        </p>
+
+                        <div className="space-y-4">
+                            {[
+                                { icon: Shield, text: 'Monitora sinais vitais e alerta sobre desvios críticos' },
+                                { icon: Clock, text: 'Lembretes personalizados de medicamentos no horário certo' },
+                                { icon: Calendar, text: 'Avisa sobre consultas próximas e prepara você para elas' },
+                                { icon: Zap, text: 'Respostas instantâneas por texto e áudio 24/7' },
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-center gap-3 text-sm text-slate-300">
+                                    <div className="w-8 h-8 rounded-lg bg-[#38bdf8]/10 flex items-center justify-center flex-shrink-0">
+                                        <item.icon className="w-4 h-4 text-[#38bdf8]" />
+                                    </div>
+                                    <span>{item.text}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Coluna 2: Chat Simulado da LIZ */}
+                    <div className="bg-[#050811] rounded-2xl border border-white/[0.08] p-6 shadow-xl">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-white/[0.06]">
+                            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#38bdf8]/40">
+                                <img src="/liz-avatar.jpg" alt="LIZ" className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-white">LIZ</p>
+                                <p className="text-[10px] text-emerald-400 font-medium">● Online agora</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {/* LIZ message */}
+                            <div className="flex gap-3">
+                                <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#38bdf8]/30">
+                                    <img src="/liz-avatar.jpg" alt="LIZ" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="bg-[#0f172a] rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] border border-white/[0.06]">
+                                    <p className="text-sm text-slate-200">
+                                        Bom dia! 🌅 Sua pressão de ontem ficou em <strong className="text-[#38bdf8]">14/9</strong>. 
+                                        Lembre-se do Losartana 50mg às 8h. Sua consulta com Dr. Silva é amanhã às 10h.
+                                    </p>
+                                    <p className="text-[10px] text-slate-500 mt-2">07:15</p>
+                                </div>
+                            </div>
+
+                            {/* User message */}
+                            <div className="flex justify-end">
+                                <div className="bg-[#0284c7] rounded-2xl rounded-tr-md px-4 py-3 max-w-[75%]">
+                                    <p className="text-sm text-white">Obrigado, LIZ! Já tomei o remédio.</p>
+                                    <p className="text-[10px] text-white/50 mt-2 text-right">07:18</p>
+                                </div>
+                            </div>
+
+                            {/* LIZ response */}
+                            <div className="flex gap-3">
+                                <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-[#38bdf8]/30">
+                                    <img src="/liz-avatar.jpg" alt="LIZ" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="bg-[#0f172a] rounded-2xl rounded-tl-md px-4 py-3 max-w-[85%] border border-white/[0.06]">
+                                    <p className="text-sm text-slate-200">
+                                        Ótimo! ✅ Registrei a adesão. Sua próxima dose é às 20h. Quer que eu te avise?
+                                    </p>
+                                    <p className="text-[10px] text-slate-500 mt-2">07:18</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Input bar */}
+                        <div className="mt-6 flex items-center gap-2 bg-[#0f172a] rounded-full px-4 py-3 border border-white/[0.08]">
+                            <input 
+                                type="text" 
+                                placeholder="Fale com a LIZ..." 
+                                className="flex-1 bg-transparent text-sm text-slate-300 placeholder:text-slate-600 outline-none" 
+                                readOnly 
+                            />
+                            <button className="w-8 h-8 rounded-full bg-[#0284c7] flex items-center justify-center flex-shrink-0">
+                                <ArrowRight className="w-4 h-4 text-white" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ===== 6. JORNADA EM 4 PASSOS ===== */}
+            <section id="jornada" className="relative z-10 py-24 px-6 md:px-12 max-w-7xl mx-auto">
+                <div className="text-center max-w-2xl mx-auto mb-16">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#38bdf8]/10 border border-[#38bdf8]/20 text-[#38bdf8] text-xs font-['Space_Grotesk',monospace] uppercase tracking-wider mb-4">
+                        COMO FUNCIONA
+                    </div>
+                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
+                        Sua jornada de saúde em 4 passos
+                    </h2>
+                    <p className="text-slate-400 text-sm">
+                        Do primeiro acesso ao acompanhamento contínuo — cada etapa conectada.
+                    </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[
+                        {
+                            step: '01',
+                            title: 'Crie sua conta',
+                            desc: 'Cadastre-se gratuitamente e preencha seu perfil de saúde em menos de 2 minutos.',
+                            icon: UserPlus,
+                        },
+                        {
+                            step: '02',
+                            title: 'Triagem Inteligente',
+                            desc: 'A LIZ faz uma triagem inicial por conversa, avalia seus sintomas e define a prioridade.',
+                            icon: MessageSquare,
+                        },
+                        {
+                            step: '03',
+                            title: 'Consulta & Prescrição',
+                            desc: 'Teleconsulta instantânea com especialista. Prescrição digital salva automaticamente.',
+                            icon: Stethoscope,
+                        },
+                        {
+                            step: '04',
+                            title: 'Cuidado Contínuo',
+                            desc: 'A LIZ monitora sinais vitais, lembra dos remédios e alerta sobre desvios de saúde.',
+                            icon: Heart,
+                        },
+                    ].map((item, i) => (
+                        <div
+                            key={i}
+                            className="group p-6 rounded-3xl bg-[#0a0f1d]/80 border border-white/[0.08] hover:border-[#38bdf8]/40 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(2,132,199,0.1)] relative overflow-hidden"
+                        >
+                            <div className="absolute top-4 right-4 text-[64px] font-['Space_Grotesk',monospace] font-black text-white/[0.03] leading-none select-none group-hover:text-[#38bdf8]/[0.08] transition-colors">
+                                {item.step}
+                            </div>
+                            <div className="w-12 h-12 rounded-2xl bg-[#38bdf8]/10 flex items-center justify-center mb-5">
+                                <item.icon className="w-5 h-5 text-[#38bdf8]" />
+                            </div>
+                            <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                            <p className="text-sm text-slate-400 leading-relaxed">{item.desc}</p>
+                            {i < 3 && (
+                                <ChevronRight className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 text-[#38bdf8]/30" />
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </section>
+
+            {/* ===== 7. CTA FINAL ===== */}
+            <section className="relative z-10 py-24 px-6 md:px-12">
+                <div className="max-w-4xl mx-auto text-center bg-gradient-to-b from-[#0f172a] to-[#0a1428] border border-white/[0.08] rounded-3xl p-12 sm:p-16 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-[#0284c7]/10 blur-3xl pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 rounded-full bg-[#38bdf8]/5 blur-3xl pointer-events-none" />
+
+                    <div className="relative z-10">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden border border-[#38bdf8]/30 shadow-[0_0_30px_rgba(56,189,248,0.3)] mx-auto mb-8">
+                            <img src="/elyon-logo.jpg" alt="ELYON" className="w-full h-full object-cover" />
+                        </div>
+
+                        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
+                            Comece sua jornada de saúde conectada
+                        </h2>
+                        <p className="text-slate-400 text-sm sm:text-base mb-10 max-w-xl mx-auto">
+                            Crie sua conta gratuita e tenha acesso ao app do paciente, à LIZ e a todo o ecossistema ELYON.
+                        </p>
+
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <button
+                                onClick={() => navigate('/app-paciente')}
+                                className="px-8 py-4 rounded-full bg-white hover:bg-slate-100 text-[#050811] font-bold text-sm transition-all shadow-[0_10px_30px_rgba(255,255,255,0.15)] hover:-translate-y-0.5 flex items-center gap-2.5 group"
+                            >
+                                <Heart className="w-4 h-4 text-[#0284c7] fill-[#0284c7]" />
+                                <span>Abrir App do Paciente</span>
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-[#0284c7]" />
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="px-7 py-4 rounded-full border border-white/15 hover:border-white/40 bg-white/[0.03] text-slate-200 font-semibold text-sm hover:bg-white/[0.08] transition-all flex items-center gap-2"
+                            >
+                                <Users className="w-4 h-4 text-[#38bdf8]" />
+                                Acesso para Clínicas
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
 
             {/* ===== FOOTER ===== */}
-            <footer className="bg-slate-900 border-t border-slate-800 py-8">
-                <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <footer className="relative z-10 border-t border-white/[0.06] py-10 px-6 md:px-12">
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-                            <img
-                                src="/src/assets/sci-logo-clean.png"
-                                alt="SCI Logo"
-                                className="w-10 h-10 object-contain"
-                                style={{ mixBlendMode: 'multiply' }}
-                            />
+                        <div className="w-8 h-8 rounded-xl overflow-hidden border border-[#38bdf8]/20">
+                            <img src="/elyon-logo.jpg" alt="ELYON" className="w-full h-full object-cover" />
                         </div>
-                        <span className="font-bold text-sm text-white leading-tight">Pareceres <span className="text-[#60A5FA] font-medium">Médicos</span></span>
+                        <span className="font-['Space_Grotesk',monospace] font-bold text-sm tracking-[0.15em] text-white">ELYON</span>
                     </div>
-                    <p className="text-slate-500 text-sm">© 2026 EXÔNIA — Todos os direitos reservados.</p>
+                    <p className="text-slate-500 text-xs">© 2026 ELYON Health Technologies — Todos os direitos reservados.</p>
                 </div>
             </footer>
         </div>
