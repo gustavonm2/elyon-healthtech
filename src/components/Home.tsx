@@ -154,11 +154,6 @@ const Home: React.FC = () => {
         [0.06, 0.30, 0.55, 0.80],
         isMobile ? ['8%', '0%', '-2%', '0%'] : ['5%', '0%', '-3%', '0%'],
     );
-    // Circular clip-path for gradual reveal
-    const patientClip = useTransform(s2,
-        [0.06, 0.14, 0.28],
-        ['circle(8% at 50% 40%)', 'circle(35% at 50% 40%)', 'circle(75% at 50% 40%)'],
-    );
 
     // ── TEXT: "E no centro de tudo," ──
     const centerText1Opacity = useTransform(s2, [0.38, 0.45, 0.58, 0.72], [0, 1, 1, 0]);
@@ -413,16 +408,15 @@ const Home: React.FC = () => {
                             opacity: patientOpacity,
                             x: patientX,
                             y: patientY,
-                            clipPath: patientClip,
                         }}
                     >
                         <img
-                            src="/patient.jpg"
+                            src="/patient.png"
                             alt="Paciente — No centro do cuidado"
                             className="w-full h-full object-cover select-none"
                             style={{ objectPosition: 'center 22%' }}
                             draggable={false}
-                            loading="lazy"
+                            loading="eager"
                         />
                         {/* Edge fading — soft integration with white */}
                         <div className="absolute left-0 top-0 h-full pointer-events-none" style={{ width: '35%', background: 'linear-gradient(to right, white 0%, rgba(255,255,255,0.4) 50%, transparent 100%)' }} />
