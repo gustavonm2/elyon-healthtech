@@ -8,7 +8,7 @@
 <body>
 <x-dc>
 <helmet>
-<title>ELYON · Cena 01 · Paciente</title>
+<title>ELYON · Cena 00</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,575 +17,288 @@
   *{box-sizing:border-box}
   body{margin:0;background:#FFFFFF;color:#0C2454;font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
   a{color:#0C2454;text-decoration:none}
-  a:hover{color:#A01C2E}
-  a:focus-visible,button:focus-visible{outline:1.5px solid #A01C2E;outline-offset:6px}
+  a:hover{color:#0C2454}
+  a:focus-visible{outline:1.5px solid #A01C2E;outline-offset:6px}
   ::selection{background:rgba(160,28,46,.12)}
-  @keyframes h1-mask{from{transform:translateY(106%)}to{transform:translateY(0)}}
-  @keyframes h1-fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes h1-node{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
-  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;animation-delay:0ms !important;transition-duration:.01ms !important}}
+  @keyframes c0-logo{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes c0-haste{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  @keyframes c0-node{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+  @keyframes c0-mask{from{transform:translateY(106%)}to{transform:translateY(0)}}
+  @keyframes c0-row{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes c0-eixo{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.01ms !important;animation-delay:0ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  }
 </style>
 </helmet>
 
-<div data-h1-root="true" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;background:#FFFFFF">
+<div data-c0-root="true" data-state="intro" style="position:relative;min-height:100vh;background:#FFFFFF;overflow:hidden">
 
-  <header style="position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px clamp(20px,5vw,96px);background:rgba(255,255,255,.88);backdrop-filter:blur(22px);border-bottom:1px solid rgba(227,231,238,.9)">
+  <div data-c0-strip="true" style="position:absolute;right:0;top:0;width:min(34vw,460px);height:100%;opacity:0;transition:opacity 700ms cubic-bezier(.22,1,.36,1);pointer-events:none">
+    <img data-c0-img="paciente" src="uploads/CENA B1.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:42% 26%;opacity:0;transition:opacity 700ms cubic-bezier(.22,1,.36,1)" />
+    <img data-c0-img="profissional" src="uploads/CENA 2 B3.png" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:58% 30%;opacity:0;transition:opacity 700ms cubic-bezier(.22,1,.36,1)" />
+    <img data-c0-img="clinica" src="uploads/3B10ACDE-FEA1-4431-A5FE-3644F5C9739D.jpeg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:36% 42%;opacity:0;transition:opacity 700ms cubic-bezier(.22,1,.36,1)" />
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg,#FFFFFF 0%,rgba(255,255,255,.42) 30%,rgba(255,255,255,.06) 100%)"></div>
+  </div>
+
+  <header data-c0-header="true" style="position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px clamp(20px,6vw,120px);background:rgba(255,255,255,.88);backdrop-filter:blur(22px);border-bottom:1px solid rgba(227,231,238,.9);opacity:0;transform:translateY(-100%);transition:opacity 600ms cubic-bezier(.22,1,.36,1),transform 600ms cubic-bezier(.22,1,.36,1);pointer-events:none">
     <span style="position:relative;display:block;width:134px;height:26px;overflow:hidden;flex:0 0 auto">
       <img src="uploads/WhatsApp Image 2026-08-15 at 12.01.04.jpeg" alt="ELYON" style="position:absolute;width:172px;height:172px;left:-19px;top:-108px;mix-blend-mode:multiply" />
     </span>
-    <span style="display:flex;align-items:center;gap:clamp(14px,2vw,28px)">
-      <span style="display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#4A5B78"><span style="width:5px;height:5px;border-radius:50%;background:#A01C2E"></span>Paciente</span>
-      <a href="#trocar" style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Trocar de caminho</a>
-    </span>
+    <span data-c0-headerlabel="true" style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#4A5B78"></span>
   </header>
 
-  <section data-h1-play="true" data-screen-label="Cena 01 · Hero paciente" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:100vh">
-    <div style="position:relative;height:100%;overflow:hidden;background:#FFFFFF">
+  <main style="position:relative;z-index:10;min-height:100vh;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(36px,5vw,96px);align-items:center;padding:clamp(64px,10vh,120px) clamp(20px,6vw,120px)">
 
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:100%;background:#A01C2E;transform-origin:top center;transform:scaleY(calc(.18 + var(--pe) * .82))"></div>
-      <div style="position:absolute;left:calc(clamp(20px,5vw,96px) - 1.9px);top:calc(58px + var(--p1) * 0px);width:5px;height:5px;border-radius:50%;background:#A01C2E;animation:h1-node 600ms cubic-bezier(.22,1,.36,1) 220ms both"></div>
-
-      <div style="position:relative;height:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(28px,4vw,72px);align-items:center;padding:clamp(88px,13vh,132px) clamp(20px,5vw,96px) clamp(40px,7vh,72px);padding-left:calc(clamp(20px,5vw,96px) + clamp(20px,2.6vw,40px))">
-
-        <div style="display:flex;flex-direction:column;max-width:min(100%,620px)">
-          <h1 style="margin:0;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(28px,3.7vw,58px);line-height:1.16;letter-spacing:-.024em;color:#0C2454;text-wrap:balance">
-            <span style="display:block;overflow:hidden;padding:.2em 0;margin:-.2em 0"><span style="display:block;white-space:nowrap;animation:h1-mask 950ms cubic-bezier(.22,1,.36,1) 300ms both">O cuidado</span></span>
-            <span style="display:block;overflow:hidden;padding:.2em 0;margin:-.2em 0"><span style="display:block;white-space:nowrap;animation:h1-mask 950ms cubic-bezier(.22,1,.36,1) 370ms both">não termina quando</span></span>
-            <span style="display:block;overflow:hidden;padding:.2em 0;margin:-.2em 0"><span style="display:block;white-space:nowrap;animation:h1-mask 950ms cubic-bezier(.22,1,.36,1) 440ms both">a <span style="font-weight:600">consulta termina.</span></span></span>
-          </h1>
-
-          <p style="margin:clamp(18px,2.8vh,32px) 0 0;max-width:30ch;font-size:clamp(16px,1.3vw,19px);line-height:1.5;color:#4A5B78;animation:h1-fade 900ms cubic-bezier(.22,1,.36,1) 620ms both">A sua, a partir de <span style="color:#0C2454;font-variant-numeric:tabular-nums">R$ 79,90</span>, continua depois dela.</p>
-
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(14px,1.8vw,26px);margin-top:clamp(26px,4.5vh,52px);opacity:clamp(0,calc((var(--p) - .48) * 4),1);transform:translateY(calc((1 - var(--p3)) * 16px))">
-            <a href="#baixar" style="display:inline-flex;align-items:center;gap:11px;min-height:52px;padding:0 26px;border:1px solid #0C2454;border-radius:2px;font-size:15px;font-weight:500;color:#0C2454;background:#FFFFFF;transition:background 320ms cubic-bezier(.22,1,.36,1),color 320ms linear" style-hover="background:#0C2454;color:#FFFFFF">
-              <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E;flex:0 0 auto"></span>Baixar o app
-            </a>
-            <a href="#agora" style="display:inline-flex;align-items:center;gap:10px;min-height:52px;font-size:14px;color:#183C6C;border-bottom:1px solid #E3E7EE;transition:border-color 320ms linear" style-hover="border-color:#A01C2E">Ser atendido agora</a>
-          </div>
-
-          <p style="margin:clamp(16px,2.4vh,26px) 0 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .58) * 4),1)">Na hora ou agendada · Por vídeo · App gratuito · Atendimento nacional</p>
-        </div>
-
-        <div style="position:relative;justify-self:center;width:100%;max-width:min(100%,520px);height:min(74vh,620px)">
-
-          <div style="position:absolute;right:0;top:50%;z-index:3;width:min(66%,300px);transform:translateY(-50%) translateY(calc((1 - var(--pe)) * 22px)) scale(calc(.965 + var(--pe) * .035));box-shadow:0 1px 2px rgba(12,36,84,.05),0 30px 60px rgba(12,36,84,.07)">
-            <img src="uploads/BBA37019-B741-49CB-998C-0243D46AB35F.jpeg" alt="Paciente em casa, acompanhando seu cuidado pelo celular" style="display:block;width:100%;height:auto;filter:blur(calc((1 - var(--p1)) * 6px))" />
-            <span style="position:absolute;left:-7px;top:-7px;width:20px;height:1px;background:#A01C2E;opacity:calc(var(--p1) * 1.4)"></span><span style="position:absolute;left:-7px;top:-7px;width:1px;height:20px;background:#A01C2E;opacity:calc(var(--p1) * 1.4)"></span>
-            <span style="position:absolute;right:-7px;bottom:-7px;width:20px;height:1px;background:#A01C2E;opacity:calc(var(--p1) * 1.4)"></span><span style="position:absolute;right:-7px;bottom:-7px;width:1px;height:20px;background:#A01C2E;opacity:calc(var(--p1) * 1.4)"></span>
-          </div>
-
-          <div style="position:absolute;left:0;top:13%;z-index:4;width:1.25px;height:1.25px;background:transparent">
-            <div style="position:absolute;left:0;top:0;height:1.25px;width:calc(var(--p2) * 13vw);max-width:168px;background:#A01C2E"></div>
-            <div style="position:absolute;left:calc(min(var(--p2) * 13vw, 168px) - 2.5px);top:-2.5px;width:5px;height:5px;border-radius:50%;background:#A01C2E;opacity:calc(var(--p2) * 1.6)"></div>
-          </div>
-
-          <div style="position:absolute;left:-8%;bottom:0;z-index:1;width:min(50%,198px);transform:translateY(calc((1 - var(--p2)) * 28px));opacity:clamp(0,calc(var(--p2) * 1.6),1);filter:drop-shadow(0 22px 40px rgba(12,36,84,.14))">
-            <img src="uploads/5822AF3D-59A5-412F-AF0F-303CB078D60A.jpeg" alt="Paciente segurando o celular com o aplicativo ELYON aberto no Portal do Paciente" style="display:block;width:100%;height:auto" />
-          </div>
-
-          <div style="position:absolute;left:0;top:calc(13% - 46px);z-index:4;max-width:min(100%,206px);display:inline-flex;align-items:center;gap:10px;padding:10px 13px;background:rgba(255,255,255,.86);backdrop-filter:blur(22px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.06);opacity:clamp(0,calc((var(--p2) - .35) * 4),1);transform:translateY(calc((1 - var(--p2)) * 12px))">
-            <span style="width:6px;height:6px;border-radius:50%;background:#A01C2E;flex:0 0 auto"></span>
-            <span style="font-size:12.5px;line-height:1.3;color:#0C2454;font-variant-numeric:tabular-nums">Atendida na hora · 08:40</span>
-          </div>
-        </div>
-      </div>
-
-      <div style="position:absolute;left:clamp(20px,5vw,96px);bottom:clamp(20px,4vh,40px);display:flex;align-items:center;gap:12px;opacity:clamp(0,calc(1 - var(--p) * 3),1)">
-        <span style="width:22px;height:1px;background:#A01C2E"></span>
-        <span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Role para continuar</span>
-      </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-start">
+      <img src="uploads/WhatsApp Image 2026-08-15 at 12.01.04.jpeg" alt="ELYON · Conecta. Coordena. Eleva." style="display:block;width:min(74%,300px);height:auto;margin-left:-6%;mix-blend-mode:multiply;animation:c0-logo 900ms cubic-bezier(.22,1,.36,1) both" />
+      <div style="position:relative;width:1.25px;height:clamp(56px,9vh,92px);background:#A01C2E;margin-left:calc(min(74%,300px) / 2 - 6%);transform-origin:top center;animation:c0-haste 700ms cubic-bezier(.22,1,.36,1) 480ms both"></div>
+      <div style="position:relative;margin-left:calc(min(74%,300px) / 2 - 6%);width:5px;height:5px;margin-top:-2.5px;margin-left:calc(min(74%,300px) / 2 - 6% - 1.9px);border-radius:50%;background:#A01C2E;animation:c0-node 500ms cubic-bezier(.22,1,.36,1) 1080ms both"></div>
     </div>
-  </section>
 
-  <section data-h1-scene="true" data-screen-label="Cena 02 · A fragmentação" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:170vh">
-    <div style="position:sticky;top:0;height:100vh;overflow:hidden;background:#FFFFFF">
+    <div style="position:relative;display:flex;flex-direction:column;gap:clamp(30px,5vh,58px);max-width:min(100%,620px)">
 
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:calc(30% - var(--pe) * 6%);background:#A01C2E"></div>
-      <div style="position:absolute;left:calc(clamp(20px,5vw,96px) - 1.9px);top:calc(30% - var(--pe) * 6%);width:5px;height:5px;border-radius:50%;background:#A01C2E;transform:translateY(-2.5px);opacity:calc(1 - var(--p2) * .45)"></div>
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:calc(58% + var(--pe) * 8%);width:1.25px;height:calc(42% - var(--pe) * 8%);background:#A01C2E;opacity:calc(1 - var(--p2) * .55)"></div>
-
-      <div style="position:absolute;inset:0;pointer-events:none">
-        <div data-h1-frag="true" style="position:absolute;left:52%;top:9%;width:min(40vw,244px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc(var(--p) * 14),1);filter:blur(calc(var(--p3) * 2.5px));transform:translate3d(calc((1 - var(--pe)) * 18px), calc(var(--p3) * -12px), 0) rotate(-1.2deg)">
-          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Hemograma completo</p>
-          <p style="margin:0;font-size:14px;color:#0C2454;font-variant-numeric:tabular-nums">12 abr · Hb 11,2 g/dL</p>
+      <div style="position:relative;min-height:clamp(84px,13vh,150px)">
+        <div data-c0-phrase="base" style="position:absolute;inset:0;transition:opacity 420ms cubic-bezier(.22,1,.36,1);font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(32px,4.6vw,68px);line-height:1.04;letter-spacing:-.025em;color:#0C2454">
+          <span style="display:block;overflow:hidden"><span style="display:block;animation:c0-mask 900ms cubic-bezier(.22,1,.36,1) 780ms both">O cuidado</span></span>
+          <span style="display:block;overflow:hidden"><span style="display:block;animation:c0-mask 900ms cubic-bezier(.22,1,.36,1) 860ms both">começa <span style="font-weight:600">aqui.</span></span></span>
         </div>
-
-        <div data-h1-frag="true" style="position:absolute;left:76%;top:27%;width:min(36vw,220px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .05) * 14),1);filter:blur(calc(var(--p3) * 3px));transform:translate3d(calc((1 - var(--pe)) * -16px), calc(var(--p3) * 14px), 0) rotate(1.6deg)">
-          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Receita</p>
-          <p style="margin:0;font-size:14px;color:#0C2454;font-variant-numeric:tabular-nums">Losartana 50 mg · 1x ao dia</p>
-        </div>
-
-        <div data-h1-frag="true" style="position:absolute;left:50%;top:48%;width:min(38vw,232px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .1) * 14),1);filter:blur(calc(var(--p3) * 3.5px));transform:translate3d(calc((1 - var(--pe)) * 14px), calc(var(--p3) * -16px), 0) rotate(.8deg)">
-          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Consulta agendada</p>
-          <p style="margin:0;font-size:14px;color:#0C2454;font-variant-numeric:tabular-nums">Cardiologia · 18 mai, 14:30</p>
-        </div>
-
-        <div data-h1-frag="true" style="position:absolute;left:73%;top:66%;width:min(36vw,226px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .15) * 14),1);filter:blur(calc(var(--p3) * 4px));transform:translate3d(calc((1 - var(--pe)) * -14px), calc(var(--p3) * 18px), 0) rotate(-2deg)">
-          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Mensagem</p>
-          <p style="margin:0;font-size:14px;line-height:1.35;color:#4A5B78">“Doutor, posso tomar os dois juntos?”</p>
-        </div>
-
-        <div data-h1-frag="true" style="position:absolute;left:51%;top:83%;width:min(40vw,240px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .2) * 14),1);filter:blur(calc(var(--p3) * 4.5px));transform:translate3d(calc((1 - var(--pe)) * 16px), calc(var(--p3) * -14px), 0) rotate(1.1deg)">
-          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Pedido de exame</p>
-          <p style="margin:0;font-size:14px;color:#4A5B78">Glicemia de jejum · não realizado</p>
-        </div>
+        <p data-c0-phrase="paciente" style="position:absolute;inset:0;margin:0;opacity:0;transition:opacity 420ms cubic-bezier(.22,1,.36,1);font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(32px,4.6vw,68px);line-height:1.04;letter-spacing:-.025em;color:#0C2454">O cuidado começa <span style="font-weight:600">em você.</span></p>
+        <p data-c0-phrase="profissional" style="position:absolute;inset:0;margin:0;opacity:0;transition:opacity 420ms cubic-bezier(.22,1,.36,1);font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(32px,4.6vw,68px);line-height:1.04;letter-spacing:-.025em;color:#0C2454">O cuidado começa <span style="font-weight:600">com quem cuida.</span></p>
+        <p data-c0-phrase="clinica" style="position:absolute;inset:0;margin:0;opacity:0;transition:opacity 420ms cubic-bezier(.22,1,.36,1);font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(32px,4.6vw,68px);line-height:1.04;letter-spacing:-.025em;color:#0C2454">O cuidado começa <span style="font-weight:600">na sua operação.</span></p>
       </div>
 
-      <div style="position:relative;height:100%;display:flex;align-items:center;padding:clamp(80px,12vh,120px) clamp(20px,5vw,96px) clamp(40px,7vh,72px);padding-left:calc(clamp(20px,5vw,96px) + clamp(20px,2.6vw,40px))">
-        <div data-h1-col="true" style="width:min(46%,560px);min-width:0">
-          <h2 style="margin:0;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(27px,3.4vw,52px);line-height:1.14;letter-spacing:-.024em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc(var(--p1) * 1.6),1);transform:translateY(calc((1 - var(--p1)) * 20px))">Sua história de saúde não deveria começar de novo <span style="font-weight:600">a cada consulta.</span></h2>
+      <nav data-c0-nav="true" aria-label="Escolha seu caminho na ELYON" style="position:relative;display:flex;flex-direction:column;gap:clamp(16px,2.6vh,30px);padding-left:clamp(22px,3vw,44px)">
+        <div data-c0-eixo="true" style="position:absolute;left:0;top:6px;bottom:6px;width:1px;background:#E3E7EE;transform-origin:top center;animation:c0-eixo 800ms cubic-bezier(.22,1,.36,1) 1000ms both"></div>
+        <div data-c0-marker="true" style="position:absolute;left:-2px;top:0;width:5px;height:5px;border-radius:50%;background:#A01C2E;opacity:0;transition:transform 520ms cubic-bezier(.65,0,.35,1),opacity 320ms linear"></div>
 
-          <p style="margin:clamp(18px,2.8vh,32px) 0 0;max-width:34ch;font-size:clamp(15px,1.2vw,18px);line-height:1.5;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .28) * 4),1)">Exame aqui, receita ali, uma pergunta sem resposta no meio.</p>
-
-          <div style="display:flex;align-items:center;gap:12px;margin-top:clamp(24px,4.5vh,50px);opacity:clamp(0,calc((var(--p) - .62) * 4),1)">
-            <span style="width:22px;height:1px;background:#A01C2E;flex:0 0 auto"></span>
-            <span style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4A5B78;text-wrap:pretty">Quantas vezes você já contou a mesma história?</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section data-h1-play="true" data-screen-label="Cena 03 · Liz, a coordenação" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:100vh">
-    <div style="position:relative;height:100%;overflow:hidden;background:#FFFFFF">
-
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:calc(24% + var(--p1) * 26%);background:#A01C2E"></div>
-      <div style="position:absolute;left:clamp(20px,5vw,96px);bottom:0;width:1.25px;height:calc(24% + var(--p1) * 26%);background:#A01C2E"></div>
-      <div style="position:absolute;left:calc(clamp(20px,5vw,96px) - 1.9px);top:50%;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:#A01C2E;opacity:clamp(0,calc((var(--p1) - .7) * 4),1)">
-        <span style="position:absolute;inset:-3px;border:1px solid #A01C2E;border-radius:50%;opacity:calc(clamp(0,(var(--p1) - .82) * 6,1) * (1 - var(--p2)));transform:scale(calc(1 + var(--p2) * 1.6))"></span>
-      </div>
-
-      <div style="position:absolute;right:0;top:0;width:min(56%,720px);height:100%;overflow:hidden">
-        <img src="uploads/C8D6CDA2-B5AB-42DF-B8F8-EBB4E30C606C.jpeg" alt="Liz, Coordenadora do Cuidado, em uma clínica clara" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:72% 26%;filter:blur(calc((1 - var(--p1)) * 8px));transform:scale(calc(1.05 - var(--pe) * .05))" />
-        <div style="position:absolute;inset:0;background:linear-gradient(90deg,#FFFFFF 0%,rgba(255,255,255,.68) 22%,rgba(255,255,255,0) 58%)"></div>
-      </div>
-
-      <div style="position:relative;height:100%;display:flex;align-items:center;padding:clamp(52px,10vh,120px) clamp(20px,5vw,96px) clamp(22px,5vh,72px);padding-left:calc(clamp(20px,5vw,96px) + clamp(20px,2.6vw,40px))">
-        <div data-h1-col="true" style="width:min(46%,560px);min-width:0">
-          <h2 style="margin:0;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(27px,3.4vw,52px);line-height:1.14;letter-spacing:-.024em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc(var(--p1) * 1.6),1);transform:translateY(calc((1 - var(--p1)) * 20px))">Entre uma etapa e outra, alguém precisa <span style="font-weight:600">coordenar.</span></h2>
-
-          <p style="margin:clamp(10px,1.8vh,24px) 0 0;max-width:36ch;font-size:clamp(14px,1.05vw,16.5px);line-height:1.5;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .22) * 4),1)">A Liz lê o seu histórico dentro da ELYON e organiza o próximo passo.</p>
-
-          <div data-h1-frag="true" style="margin:clamp(10px,2vh,26px) 0 0;max-width:430px;opacity:clamp(0,calc((var(--p2) - .02) * 8),1)">
-            <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
-              <img src="uploads/C8D6CDA2-B5AB-42DF-B8F8-EBB4E30C606C.jpeg" alt="" style="width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:72% 22%;flex:0 0 auto;box-shadow:0 0 0 1px #E3E7EE" />
-              <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#183C6C">Liz · Coordenadora do Cuidado</span>
-              <span style="width:4px;height:4px;border-radius:50%;background:#A01C2E;flex:0 0 auto"></span>
-            </div>
-
-            <div style="background:#FFFFFF;border:1px solid #E3E7EE;border-left:1.5px solid #A01C2E;box-shadow:0 1px 2px rgba(12,36,84,.05),0 18px 36px rgba(12,36,84,.06)">
-              <p style="margin:0;padding:12px 15px 11px;border-bottom:1px solid #EEF1F6;font-size:13px;line-height:1.4;color:#0C2454"><span style="font-weight:600">“Olhei o seu histórico.</span> Três coisas estão pendentes:”</p>
-
-              <div style="display:flex;flex-direction:column">
-                <div style="display:flex;align-items:baseline;gap:11px;padding:10px 15px;border-bottom:1px solid #EEF1F6;opacity:clamp(0,calc((var(--p2) - .16) * 7),1)">
-                  <span style="font-size:10px;color:#A01C2E;font-variant-numeric:tabular-nums;flex:0 0 auto">01</span>
-                  <span style="min-width:0">
-                    <span style="display:block;font-size:12.5px;line-height:1.35;color:#0C2454">Repetir o hemograma</span>
-                    <span style="display:block;margin-top:2px;font-size:11px;color:#4A5B78">O último foi há quatro meses</span>
-                  </span>
-                </div>
-
-                <div style="display:flex;align-items:baseline;gap:11px;padding:10px 15px;border-bottom:1px solid #EEF1F6;opacity:clamp(0,calc((var(--p2) - .32) * 7),1)">
-                  <span style="font-size:10px;color:#A01C2E;font-variant-numeric:tabular-nums;flex:0 0 auto">02</span>
-                  <span style="min-width:0">
-                    <span style="display:block;font-size:12.5px;line-height:1.35;color:#0C2454">Fazer a glicemia de jejum</span>
-                    <span style="display:block;margin-top:2px;font-size:11px;color:#4A5B78">O pedido está em aberto desde maio</span>
-                  </span>
-                </div>
-
-                <div style="display:flex;align-items:baseline;gap:11px;padding:10px 15px;opacity:clamp(0,calc((var(--p2) - .48) * 7),1)">
-                  <span style="font-size:10px;color:#A01C2E;font-variant-numeric:tabular-nums;flex:0 0 auto">03</span>
-                  <span style="min-width:0">
-                    <span style="display:block;font-size:12.5px;line-height:1.35;color:#0C2454">Tomar a losartana às 08:00</span>
-                    <span style="display:block;margin-top:2px;font-size:11px;color:#4A5B78">Lembrete diário, se você quiser</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <p style="margin:clamp(9px,1.5vh,20px) 0 0;max-width:38ch;display:flex;gap:10px;font-size:12px;line-height:1.45;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .5) * 4),1)">
-            <span style="width:1.5px;background:#A01C2E;flex:0 0 auto"></span>
-            <span>A Liz não diagnostica nem prescreve. A decisão clínica é sempre de um profissional com registro ativo.</span>
-          </p>
-
-          <div style="display:flex;align-items:center;gap:12px;margin-top:clamp(11px,2.2vh,30px);opacity:clamp(0,calc((var(--p) - .72) * 4),1)">
-            <span style="width:22px;height:1px;background:#A01C2E;flex:0 0 auto"></span>
-            <span style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4A5B78">E onde tudo isso fica guardado?</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section data-h1-play="true" data-screen-label="Cena 04 · O prontuário que devolve" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:100vh">
-    <div style="position:relative;height:100%;overflow:hidden;background:#FFFFFF">
-
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:calc(14% + var(--p1) * 14%);background:#A01C2E;opacity:clamp(0,calc(var(--p) * 8),1)"></div>
-
-      <div style="position:absolute;right:clamp(-34px,-2vw,-14px);bottom:clamp(-40px,-5vh,-18px);width:min(23vw,268px);pointer-events:none;opacity:clamp(0,calc((var(--p) - .28) * 5),1)">
-        <img src="uploads/52C930E2-BED6-486D-AE0E-DD5B0FB5CA7B.jpeg" alt="Prontuário ELYON na tela do celular, com os registros em ordem cronológica" style="display:block;width:100%;height:auto;mix-blend-mode:multiply;transform:scale(calc(1.04 - var(--pe) * .04));-webkit-mask-image:radial-gradient(120% 110% at 78% 62%,#000 42%,rgba(0,0,0,0) 86%);mask-image:radial-gradient(120% 110% at 78% 62%,#000 42%,rgba(0,0,0,0) 86%)" />
-      </div>
-
-      <div style="position:absolute;top:clamp(74px,11vh,104px);bottom:clamp(26px,5vh,64px);left:clamp(20px,5vw,96px);right:clamp(20px,5vw,96px)">
-
-        <div style="max-width:50ch;position:relative;z-index:2">
-          <h2 style="margin:0;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(24px,2.7vw,40px);line-height:1.14;letter-spacing:-.022em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc((var(--p) - .01) * 7),1);transform:translateY(calc((1 - clamp(0,calc((var(--p) - .01) * 7),1)) * 16px))">Tudo isso fica em um lugar só: <span style="font-weight:600">o seu prontuário.</span></h2>
-          <p style="margin:clamp(8px,1.4vh,16px) 0 0;max-width:46ch;font-size:clamp(13px,1vw,15.5px);line-height:1.5;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .07) * 7),1)">Um registro por etapa — cada um com autor, data e rastreabilidade.</p>
-        </div>
-
-        <div style="position:absolute;left:0;right:0;top:50%;height:0">
-
-          <div style="position:absolute;left:0;right:0;top:0;height:1.25px;background:#A01C2E;transform-origin:left center;transform:scaleX(clamp(0,calc((var(--p) - .05) * 2.1),1))"></div>
-
-          <div style="position:absolute;left:0;right:0;top:0;height:0;display:flex">
-
-            <div style="flex:1;min-width:0;position:relative">
-              <span style="position:absolute;left:50%;top:0;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#A01C2E;opacity:clamp(0,calc((var(--p) - .12) * 9),1)"></span>
-              <div data-h1-frag="true" style="position:absolute;left:50%;bottom:16px;width:calc(100% - 14px);transform:translateX(-50%);border-top:1.5px solid #A01C2E;background:#FFFFFF;box-shadow:0 1px 2px rgba(12,36,84,.05),0 14px 30px rgba(12,36,84,.055);opacity:clamp(0,calc((var(--p) - .12) * 9),1)">
-                <span style="display:block;padding:8px 11px 0;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E">Seg · 08:40</span>
-                <span style="display:block;padding:3px 11px 0;font-size:12.5px;line-height:1.3;color:#0C2454">Consulta por vídeo</span>
-                <span style="display:block;padding:4px 11px 9px;font-size:10.5px;line-height:1.3;color:#4A5B78">Pedida na hora · CRM ativo</span>
-              </div>
-            </div>
-
-            <div style="flex:1;min-width:0;position:relative">
-              <span style="position:absolute;left:50%;top:0;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#A01C2E;opacity:clamp(0,calc((var(--p) - .21) * 9),1)"></span>
-              <div data-h1-frag="true" style="position:absolute;left:50%;top:16px;width:calc(100% - 14px);transform:translateX(-50%);border-top:1.5px solid #A01C2E;background:#FFFFFF;box-shadow:0 1px 2px rgba(12,36,84,.05),0 14px 30px rgba(12,36,84,.055);opacity:clamp(0,calc((var(--p) - .21) * 9),1)">
-                <span style="display:block;padding:8px 11px 0;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E">Seg · 09:10</span>
-                <span style="display:block;padding:3px 11px 0;font-size:12.5px;line-height:1.3;color:#0C2454">Leitura de coordenação</span>
-                <span style="display:block;padding:4px 11px 9px;font-size:10.5px;line-height:1.3;color:#4A5B78">Liz · não diagnostica</span>
-              </div>
-            </div>
-
-            <div style="flex:1;min-width:0;position:relative">
-              <span style="position:absolute;left:50%;top:0;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#A01C2E;opacity:clamp(0,calc((var(--p) - .30) * 9),1)"></span>
-              <div data-h1-frag="true" style="position:absolute;left:50%;bottom:16px;width:calc(100% - 14px);transform:translateX(-50%);border-top:1.5px solid #A01C2E;background:#FFFFFF;box-shadow:0 1px 2px rgba(12,36,84,.05),0 14px 30px rgba(12,36,84,.055);opacity:clamp(0,calc((var(--p) - .30) * 9),1)">
-                <span style="display:block;padding:8px 11px 0;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E">Qua</span>
-                <span style="display:block;padding:3px 11px 0;font-size:12.5px;line-height:1.3;color:#0C2454">Parecer de cardiologia</span>
-                <span style="display:block;padding:4px 11px 9px;font-size:10.5px;line-height:1.3;color:#4A5B78">Volta anexado · CRM ativo</span>
-              </div>
-            </div>
-
-            <div style="flex:1;min-width:0;position:relative">
-              <span style="position:absolute;left:50%;top:0;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#A01C2E;opacity:clamp(0,calc((var(--p) - .39) * 9),1)"></span>
-              <div data-h1-frag="true" style="position:absolute;left:50%;top:16px;width:calc(100% - 14px);transform:translateX(-50%);border-top:1.5px solid #A01C2E;background:#FFFFFF;box-shadow:0 1px 2px rgba(12,36,84,.05),0 14px 30px rgba(12,36,84,.055);opacity:clamp(0,calc((var(--p) - .39) * 9),1)">
-                <span style="display:block;padding:8px 11px 0;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E">Qui</span>
-                <span style="display:block;padding:3px 11px 0;font-size:12.5px;line-height:1.3;color:#0C2454">Prescrição consentida</span>
-                <span style="display:block;padding:4px 11px 9px;font-size:10.5px;line-height:1.3;color:#4A5B78">Custo visto antes de iniciar</span>
-              </div>
-            </div>
-
-            <div style="flex:1;min-width:0;position:relative">
-              <span style="position:absolute;left:50%;top:0;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;background:#A01C2E;opacity:clamp(0,calc((var(--p) - .48) * 9),1)"></span>
-              <div data-h1-frag="true" style="position:absolute;left:50%;bottom:16px;width:calc(100% - 14px);transform:translateX(-50%);border-top:1.5px solid #A01C2E;background:#FFFFFF;box-shadow:0 1px 2px rgba(12,36,84,.05),0 14px 30px rgba(12,36,84,.055);opacity:clamp(0,calc((var(--p) - .48) * 9),1)">
-                <span style="display:block;padding:8px 11px 0;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E">Sex · 15:02</span>
-                <span style="display:block;padding:3px 11px 0;font-size:12.5px;line-height:1.3;color:#0C2454">Procedimento em casa</span>
-                <span style="display:block;padding:4px 11px 9px;font-size:10.5px;line-height:1.3;color:#4A5B78">Enfermagem · COREN ativo</span>
-              </div>
-            </div>
-          </div>
-
-          <svg viewBox="0 0 1000 170" preserveAspectRatio="none" aria-hidden="true" style="position:absolute;left:0;right:0;top:0;width:100%;height:clamp(96px,17vh,150px);overflow:visible;opacity:clamp(0,calc((var(--p) - .60) * 5),1)">
-            <path d="M 900 0 C 900 130 880 158 500 158 C 120 158 100 130 100 0" pathLength="1" fill="none" stroke="#A01C2E" stroke-width="1.25" vector-effect="non-scaling-stroke" style="stroke-dasharray:1;stroke-dashoffset:calc(1 - clamp(0,(var(--p) - .60) * 3.1,1))" />
-            <path d="M 100 0 L 100 0 M 94 16 L 100 2 L 106 16" fill="none" stroke="#A01C2E" stroke-width="1.25" vector-effect="non-scaling-stroke" style="opacity:clamp(0,calc((var(--p) - .86) * 8),1)" />
+        <a data-c0-path="paciente" href="#paciente" style="position:relative;display:flex;align-items:center;gap:clamp(14px,1.6vw,22px);min-height:56px;padding:6px 0;transition:transform 480ms cubic-bezier(.22,1,.36,1),opacity 480ms cubic-bezier(.22,1,.36,1);animation:c0-row 800ms cubic-bezier(.22,1,.36,1) 1180ms both">
+          <span data-c0-fio="true" style="display:block;width:clamp(26px,3.4vw,52px);height:1px;background:#E3E7EE;flex:0 0 auto;transition:background 360ms linear,width 480ms cubic-bezier(.22,1,.36,1)"></span>
+          <svg viewBox="0 0 26 26" style="width:22px;height:22px;flex:0 0 auto;overflow:visible" aria-hidden="true">
+            <circle data-c0-dot="true" cx="13" cy="13" r="2.6" fill="#8A94A6" style="transition:fill 360ms linear" />
           </svg>
-
-          <span style="position:absolute;left:50%;top:clamp(104px,18vh,160px);transform:translateX(-50%);padding:0 12px;background:#FFFFFF;white-space:nowrap;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#183C6C;opacity:clamp(0,calc((var(--p) - .74) * 6),1)">O último registro abre a próxima decisão</span>
-        </div>
-
-        <div style="position:absolute;left:0;bottom:0;display:flex;align-items:center;gap:10px;opacity:clamp(0,calc((var(--p) - .88) * 8),1)">
-          <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E;flex:0 0 auto"></span>
-          <span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Seu prontuário é seu · sempre</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section data-h1-play="true" data-screen-label="Cena 05 · Prova · isso já existe hoje" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:100vh">
-    <div style="position:relative;height:100%;overflow:hidden;background:#FFFFFF">
-
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:calc(12% + var(--p1) * 12%);background:#A01C2E;opacity:clamp(0,calc(var(--p) * 8),1)"></div>
-
-      <div style="position:absolute;left:0;right:0;bottom:0;height:clamp(132px,27vh,264px);overflow:hidden">
-        <img src="uploads/3B10ACDE-FEA1-4431-A5FE-3644F5C9739D.jpeg" alt="Equipe de uma clínica ELYON: profissionais de jaleco branco trabalhando em um ambiente claro" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 42%;filter:blur(calc((1 - clamp(0,calc((var(--p) - .04) * 4),1)) * 6px));transform:scale(calc(1.04 - var(--pe) * .04))" />
-        <div style="position:absolute;inset:0;background:linear-gradient(180deg,#FFFFFF 0%,rgba(255,255,255,.34) 20%,rgba(255,255,255,0) 52%)"></div>
-        <div style="position:absolute;left:0;right:0;top:52%;height:1.25px;background:#A01C2E;transform-origin:left center;transform:scaleX(clamp(0,calc((var(--p) - .1) * 1.9),1))"></div>
-      </div>
-
-      <div style="position:absolute;top:clamp(74px,11vh,104px);left:clamp(20px,5vw,96px);right:clamp(20px,5vw,96px);bottom:calc(clamp(132px,27vh,264px) + clamp(14px,2.4vh,28px));display:flex;flex-direction:column;justify-content:center">
-
-        <h2 style="margin:0;max-width:30ch;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(24px,2.7vw,40px);line-height:1.14;letter-spacing:-.022em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc((var(--p) - .01) * 7),1);transform:translateY(calc((1 - clamp(0,calc((var(--p) - .01) * 7),1)) * 16px))">Nada disso é para o ano que vem. <span style="font-weight:600">Já está atendendo.</span></h2>
-
-        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,1.8vh,20px) clamp(20px,3vw,48px);margin-top:clamp(14px,2.6vh,30px);max-width:760px">
-
-          <div data-h1-frag="true" style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .14) * 8),1)">
-            <span style="display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#A01C2E">Disponível hoje</span>
-            <span style="display:block;margin-top:5px;font-size:clamp(12.5px,1vw,14.5px);line-height:1.4;color:#0C2454">Clínica geral e medicina de família, cardiologia, pediatria, saúde mental e enfermagem domiciliar</span>
-          </div>
-
-          <div data-h1-frag="true" style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .26) * 8),1)">
-            <span style="display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#A01C2E">Toda a rede</span>
-            <span style="display:block;margin-top:5px;font-size:clamp(12.5px,1vw,14.5px);line-height:1.4;color:#0C2454">Profissionais com <span style="font-weight:600">registro ativo</span> — CRM, COREN e CRO verificados</span>
-          </div>
-
-          <div data-h1-frag="true" style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .38) * 8),1)">
-            <span style="display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#A01C2E">Alcance</span>
-            <span style="display:block;margin-top:5px;font-size:clamp(12.5px,1vw,14.5px);line-height:1.4;color:#0C2454">Atendimento nacional para consultas e pareceres</span>
-          </div>
-
-          <div data-h1-frag="true" style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .5) * 8),1)">
-            <span style="display:block;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#A01C2E">Seus dados</span>
-            <span style="display:block;margin-top:5px;font-size:clamp(12.5px,1vw,14.5px);line-height:1.4;color:#0C2454">Prontuário único e auditável, em conformidade com a LGPD e o sigilo médico</span>
-          </div>
-        </div>
-
-        <div style="margin-top:clamp(18px,3.4vh,40px);display:flex;align-items:center;gap:12px;opacity:clamp(0,calc((var(--p) - .74) * 5),1)">
-          <span style="width:22px;height:1px;background:#A01C2E;flex:0 0 auto"></span>
-          <span style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4A5B78">E quanto custa?</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section data-h1-play="true" data-screen-label="Cena 06 · A oferta" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:100vh">
-    <div style="position:relative;height:100%;overflow:hidden;background:#FFFFFF">
-
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:calc(10% + var(--p1) * 10%);background:#A01C2E;opacity:clamp(0,calc(var(--p) * 8),1)"></div>
-
-      <div data-h1-frag="true" style="position:absolute;right:clamp(-30px,-1vw,0px);bottom:clamp(-44px,-6vh,-20px);width:min(31vw,372px);pointer-events:none;opacity:clamp(0,calc((var(--p) - .2) * 5),1)">
-        <img src="uploads/5822AF3D-59A5-412F-AF0F-303CB078D60A.jpeg" alt="Portal do paciente ELYON aberto no celular" style="display:block;width:100%;height:auto;transform:scale(calc(1.03 - var(--pe) * .03));-webkit-mask-image:radial-gradient(118% 108% at 62% 56%,#000 44%,rgba(0,0,0,0) 88%);mask-image:radial-gradient(118% 108% at 62% 56%,#000 44%,rgba(0,0,0,0) 88%)" />
-      </div>
-
-      <div data-h1-pad="true" style="position:absolute;top:clamp(74px,11vh,104px);bottom:clamp(22px,4vh,52px);left:clamp(20px,5vw,96px);right:calc(min(31vw,372px) + clamp(16px,2vw,32px));display:flex;flex-direction:column;justify-content:center">
-        <div style="width:min(100%,620px)">
-
-          <h2 style="margin:0;max-width:26ch;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(24px,2.7vw,40px);line-height:1.14;letter-spacing:-.022em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc((var(--p) - .01) * 7),1);transform:translateY(calc((1 - clamp(0,calc((var(--p) - .01) * 7),1)) * 16px))">O app é grátis. A consulta começa em <span style="font-weight:600">R$ 79,90.</span></h2>
-
-          <div style="margin-top:clamp(14px,2.6vh,28px);display:flex;flex-direction:column">
-
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:9px 0;border-top:1px solid #E3E7EE;opacity:clamp(0,calc((var(--p) - .12) * 9),1)">
-              <span style="font-size:clamp(12.5px,1vw,14.5px);line-height:1.35;color:#0C2454">App ELYON completo</span>
-              <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E;white-space:nowrap">Gratuito</span>
-            </div>
-
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:9px 0;border-top:1px solid #E3E7EE;opacity:clamp(0,calc((var(--p) - .2) * 9),1)">
-              <span style="font-size:clamp(12.5px,1vw,14.5px);line-height:1.35;color:#0C2454">Prontuário único, seu, para sempre</span>
-              <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E;white-space:nowrap">Incluso</span>
-            </div>
-
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:9px 0;border-top:1px solid #E3E7EE;opacity:clamp(0,calc((var(--p) - .28) * 9),1)">
-              <span style="font-size:clamp(12.5px,1vw,14.5px);line-height:1.35;color:#0C2454">Liz · coordenação do seu cuidado</span>
-              <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E;white-space:nowrap">Incluso</span>
-            </div>
-
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:9px 0;border-top:1px solid #E3E7EE;opacity:clamp(0,calc((var(--p) - .36) * 9),1)">
-              <span style="font-size:clamp(12.5px,1vw,14.5px);line-height:1.35;color:#0C2454">Consulta com clínico geral — <span style="font-weight:600">na hora</span> ou agendada</span>
-              <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#A01C2E;white-space:nowrap">A partir de R$ 79,90</span>
-            </div>
-
-            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:9px 0;border-top:1px solid #E3E7EE;border-bottom:1px solid #E3E7EE;opacity:clamp(0,calc((var(--p) - .44) * 9),1)">
-              <span style="font-size:clamp(12.5px,1vw,14.5px);line-height:1.35;color:#0C2454">Mensalidade, fidelidade ou multa para sair</span>
-              <span style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#4A5B78;white-space:nowrap">Não existe</span>
-            </div>
-          </div>
-
-          <p style="margin:clamp(12px,2.2vh,22px) 0 0;max-width:52ch;display:flex;gap:10px;font-size:12px;line-height:1.45;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .56) * 6),1)">
-            <span style="width:1.5px;background:#A01C2E;flex:0 0 auto"></span>
-            <span>Uma consulta particular em consultório costuma custar mais — e termina no instante em que você sai da sala.</span>
-          </p>
-
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;margin-top:clamp(14px,2.6vh,30px);opacity:clamp(0,calc((var(--p) - .68) * 6),1)">
-            <a href="#baixar" style="display:inline-flex;align-items:center;gap:10px;padding:13px 22px;background:#0C2454;color:#FFFFFF;font-size:12.5px;letter-spacing:.06em" style-hover="background:#A01C2E;color:#FFFFFF">Baixar o app — é grátis</a>
-            <a href="#agora" style="display:inline-flex;align-items:center;gap:9px;font-size:12.5px;color:#0C2454;border-bottom:1px solid #E3E7EE;padding-bottom:3px" style-hover="color:#A01C2E;border-bottom:1px solid #A01C2E">Ou ser atendido agora</a>
-          </div>
-
-          <div style="display:flex;align-items:center;gap:10px;margin-top:clamp(12px,2.2vh,24px);opacity:clamp(0,calc((var(--p) - .84) * 7),1)">
-            <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E;flex:0 0 auto"></span>
-            <span style="font-size:11px;line-height:1.4;color:#4A5B78">Se a consulta não acontecer por falha nossa, devolvemos 100% — e o prontuário continua seu</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section data-h1-play="true" data-screen-label="Cena 07 · Objeções" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:100vh">
-    <div style="position:relative;height:100%;overflow:hidden;background:#FFFFFF">
-
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:calc(10% + var(--p1) * 10%);background:#A01C2E;opacity:clamp(0,calc(var(--p) * 8),1)"></div>
-
-      <div style="position:absolute;top:clamp(74px,11vh,104px);bottom:clamp(22px,4vh,52px);left:clamp(20px,5vw,96px);right:clamp(20px,5vw,96px);display:flex;flex-direction:column;justify-content:center">
-
-        <h2 style="margin:0;max-width:28ch;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(24px,2.7vw,40px);line-height:1.14;letter-spacing:-.022em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc((var(--p) - .01) * 7),1);transform:translateY(calc((1 - clamp(0,calc((var(--p) - .01) * 7),1)) * 16px))">O que você ainda está <span style="font-weight:600">pensando.</span></h2>
-
-        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,1.8vh,20px) clamp(24px,4vw,64px);margin-top:clamp(14px,2.6vh,30px);max-width:1000px">
-
-          <div style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .1) * 9),1)">
-            <span style="display:block;font-size:clamp(12.5px,1vw,14px);font-weight:600;line-height:1.35;color:#0C2454">A Liz é uma pessoa ou um robô?</span>
-            <span style="display:block;margin-top:4px;font-size:clamp(11.5px,.9vw,12.5px);line-height:1.45;color:#4A5B78">É inteligência de coordenação. Ela organiza e avisa — quem decide é sempre um profissional com registro ativo.</span>
-          </div>
-
-          <div style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .2) * 9),1)">
-            <span style="display:block;font-size:clamp(12.5px,1vw,14px);font-weight:600;line-height:1.35;color:#0C2454">Preciso ter plano de saúde?</span>
-            <span style="display:block;margin-top:4px;font-size:clamp(11.5px,.9vw,12.5px);line-height:1.45;color:#4A5B78">Não. A ELYON não é plano de saúde. Você paga por consulta, sem mensalidade.</span>
-          </div>
-
-          <div style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .3) * 9),1)">
-            <span style="display:block;font-size:clamp(12.5px,1vw,14px);font-weight:600;line-height:1.35;color:#0C2454">Meus dados estão seguros?</span>
-            <span style="display:block;margin-top:4px;font-size:clamp(11.5px,.9vw,12.5px);line-height:1.45;color:#4A5B78">Cada registro tem autor, data e rastreabilidade. Acesso controlado por perfil, LGPD e sigilo médico.</span>
-          </div>
-
-          <div style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .4) * 9),1)">
-            <span style="display:block;font-size:clamp(12.5px,1vw,14px);font-weight:600;line-height:1.35;color:#0C2454">Serve para quem quase não usa médico?</span>
-            <span style="display:block;margin-top:4px;font-size:clamp(11.5px,.9vw,12.5px);line-height:1.45;color:#4A5B78">Serve — é justamente quem chega sem histórico quando precisa. Aqui ele passa a existir desde a primeira consulta.</span>
-          </div>
-
-          <div style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .5) * 9),1)">
-            <span style="display:block;font-size:clamp(12.5px,1vw,14px);font-weight:600;line-height:1.35;color:#0C2454">E se eu não gostar?</span>
-            <span style="display:block;margin-top:4px;font-size:clamp(11.5px,.9vw,12.5px);line-height:1.45;color:#4A5B78">Se a consulta não acontecer por falha nossa, devolvemos 100%. O prontuário continua seu, exportável, mesmo que você não volte.</span>
-          </div>
-
-          <div style="border-top:1px solid #E3E7EE;padding-top:9px;opacity:clamp(0,calc((var(--p) - .6) * 9),1)">
-            <span style="display:block;font-size:clamp(12.5px,1vw,14px);font-weight:600;line-height:1.35;color:#0C2454">Consulta por vídeo resolve mesmo?</span>
-            <span style="display:block;margin-top:4px;font-size:clamp(11.5px,.9vw,12.5px);line-height:1.45;color:#4A5B78">Resolve a maior parte do que hoje leva você a uma sala de espera. Quando precisa de exame ou procedimento, a ELYON organiza o passo seguinte.</span>
-          </div>
-        </div>
-
-        <div style="margin-top:clamp(16px,3vh,36px);display:flex;align-items:center;gap:12px;opacity:clamp(0,calc((var(--p) - .78) * 5),1)">
-          <span style="width:22px;height:1px;background:#A01C2E;flex:0 0 auto"></span>
-          <span style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4A5B78">Então é só começar</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section data-h1-play="true" data-screen-label="Cena 08 · Fechamento" style="--p:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:100vh">
-    <div style="position:relative;height:100%;overflow:hidden;background:#FFFFFF">
-
-      <div style="position:absolute;left:clamp(20px,5vw,96px);top:0;width:1.25px;height:52%;background:#A01C2E;transform-origin:top center;transform:scaleY(clamp(0,calc(var(--p) * 2.4),1))"></div>
-      <div style="position:absolute;left:calc(clamp(20px,5vw,96px) - 4.5px);top:52%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:#A01C2E;opacity:clamp(0,calc((var(--p) - .4) * 6),1);transform:scale(calc(.4 + clamp(0,calc((var(--p) - .4) * 6),1) * .6))"></div>
-
-      <div style="position:absolute;top:clamp(74px,11vh,104px);bottom:clamp(22px,4vh,52px);left:calc(clamp(20px,5vw,96px) + clamp(20px,2.6vw,40px));right:clamp(20px,5vw,96px);display:flex;flex-direction:column;justify-content:center">
-        <div style="width:min(100%,660px)">
-
-          <h2 style="margin:0;max-width:24ch;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(27px,3.4vw,52px);line-height:1.14;letter-spacing:-.024em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc((var(--p) - .01) * 7),1);transform:translateY(calc((1 - clamp(0,calc((var(--p) - .01) * 7),1)) * 18px))">O próximo cuidado pode começar <span style="font-weight:600">agora.</span></h2>
-
-          <p style="margin:clamp(14px,2.4vh,26px) 0 0;max-width:44ch;font-size:clamp(14px,1.1vw,17px);line-height:1.5;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .16) * 6),1)">App gratuito. Consulta na hora ou agendada, a partir de <span style="color:#0C2454;font-variant-numeric:tabular-nums">R$ 79,90</span>. Sem mensalidade.</p>
-
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:clamp(14px,1.8vw,26px);margin-top:clamp(20px,3.4vh,40px);opacity:clamp(0,calc((var(--p) - .34) * 6),1)">
-            <a href="#baixar" style="display:inline-flex;align-items:center;gap:11px;min-height:52px;padding:0 26px;border:1px solid #0C2454;border-radius:2px;font-size:15px;font-weight:500;color:#0C2454;background:#FFFFFF;transition:background 320ms cubic-bezier(.22,1,.36,1),color 320ms linear" style-hover="background:#0C2454;color:#FFFFFF">
-              <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E;flex:0 0 auto"></span>Baixar o app — é grátis
-            </a>
-            <a href="#agora" style="display:inline-flex;align-items:center;gap:10px;min-height:52px;font-size:14px;color:#183C6C;border-bottom:1px solid #E3E7EE;transition:border-color 320ms linear" style-hover="border-color:#A01C2E">Ser atendido agora</a>
-          </div>
-
-          <p style="margin:clamp(20px,3.4vh,40px) 0 0;max-width:52ch;display:flex;gap:11px;font-size:clamp(12px,.95vw,13.5px);line-height:1.5;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .56) * 5),1)">
-            <span style="width:1.5px;background:#A01C2E;flex:0 0 auto"></span>
-            <span><span style="color:#0C2454;font-weight:600">P.S.</span> Você provavelmente não vai lembrar desta página em três meses. Mas vai lembrar da próxima vez que um profissional perguntar <span style="color:#0C2454">“você trouxe o exame?”</span> — e você tiver que procurar no celular.</span>
-          </p>
-
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:clamp(18px,3vh,34px);opacity:clamp(0,calc((var(--p) - .8) * 6),1)">
-            <span style="display:inline-flex;align-items:center;gap:9px">
-              <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E;flex:0 0 auto"></span>
-              <span style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78">Seu prontuário é seu · sempre</span>
+          <span style="display:block">
+            <span data-c0-concept="true" style="display:block;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(25px,2.9vw,42px);line-height:1.1;letter-spacing:-.018em;color:#0C2454;transition:font-weight 240ms linear">Cuidar de mim</span>
+            <span style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-top:6px">
+              <span style="font-size:13px;color:#4A5B78">Paciente</span>
+              <span data-c0-recog="true" style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78;transition:color 360ms linear">Para mim e para a minha família</span>
             </span>
-            <a href="#profissional" style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#183C6C;border-bottom:1px solid #E3E7EE" style-hover="color:#A01C2E;border-bottom:1px solid #A01C2E">Cuido de pacientes →</a>
-          </div>
-        </div>
-      </div>
+          </span>
+        </a>
+
+        <a data-c0-path="profissional" href="#profissional" style="position:relative;display:flex;align-items:center;gap:clamp(14px,1.6vw,22px);min-height:56px;padding:6px 0;transition:transform 480ms cubic-bezier(.22,1,.36,1),opacity 480ms cubic-bezier(.22,1,.36,1);animation:c0-row 800ms cubic-bezier(.22,1,.36,1) 1300ms both">
+          <span data-c0-fio="true" style="display:block;width:clamp(26px,3.4vw,52px);height:1px;background:#E3E7EE;flex:0 0 auto;transition:background 360ms linear,width 480ms cubic-bezier(.22,1,.36,1)"></span>
+          <svg viewBox="0 0 26 26" style="width:22px;height:22px;flex:0 0 auto;overflow:visible" aria-hidden="true">
+            <path d="M2 4 L11 12" stroke="#E3E7EE" stroke-width="1" fill="none" />
+            <path d="M2 13 L11 13" stroke="#E3E7EE" stroke-width="1" fill="none" />
+            <path d="M2 22 L11 14" stroke="#E3E7EE" stroke-width="1" fill="none" />
+            <circle data-c0-dot="true" cx="13" cy="13" r="2.6" fill="#8A94A6" style="transition:fill 360ms linear" />
+          </svg>
+          <span style="display:block">
+            <span data-c0-concept="true" style="display:block;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(21px,2.2vw,32px);line-height:1.12;letter-spacing:-.014em;color:#183C6C;transition:font-weight 240ms linear">Atender pacientes</span>
+            <span style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-top:5px">
+              <span style="font-size:13px;color:#4A5B78">Profissional</span>
+              <span data-c0-recog="true" style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78;transition:color 360ms linear">Médicos, enfermeiros e especialistas</span>
+            </span>
+          </span>
+        </a>
+
+        <a data-c0-path="clinica" href="#clinica" style="position:relative;display:flex;align-items:center;gap:clamp(14px,1.6vw,22px);min-height:56px;padding:6px 0;transition:transform 480ms cubic-bezier(.22,1,.36,1),opacity 480ms cubic-bezier(.22,1,.36,1);animation:c0-row 800ms cubic-bezier(.22,1,.36,1) 1420ms both">
+          <span data-c0-fio="true" style="display:block;width:clamp(26px,3.4vw,52px);height:1px;background:#E3E7EE;flex:0 0 auto;transition:background 360ms linear,width 480ms cubic-bezier(.22,1,.36,1)"></span>
+          <svg viewBox="0 0 26 26" style="width:22px;height:22px;flex:0 0 auto;overflow:visible" aria-hidden="true">
+            <path d="M13 3 L13 23" stroke="#E3E7EE" stroke-width="1" fill="none" />
+            <circle data-c0-dot="true" cx="13" cy="4" r="2.2" fill="#8A94A6" style="transition:fill 360ms linear" />
+            <circle data-c0-dot="true" cx="13" cy="13" r="2.6" fill="#8A94A6" style="transition:fill 360ms linear" />
+            <circle data-c0-dot="true" cx="13" cy="22" r="2.2" fill="#8A94A6" style="transition:fill 360ms linear" />
+          </svg>
+          <span style="display:block">
+            <span data-c0-concept="true" style="display:block;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(21px,2.2vw,32px);line-height:1.12;letter-spacing:-.014em;color:#183C6C;transition:font-weight 240ms linear">Cuidar com a minha equipe</span>
+            <span style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-top:5px">
+              <span style="font-size:13px;color:#4A5B78">Clínica</span>
+              <span data-c0-recog="true" style="font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78;transition:color 360ms linear">Clínicas, consultórios e operações de saúde</span>
+            </span>
+          </span>
+        </a>
+      </nav>
+
+      <button data-c0-swap="true" type="button" style="align-self:flex-start;display:inline-flex;align-items:center;gap:9px;min-height:44px;padding:0;font-family:inherit;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#4A5B78;background:none;border:0;cursor:pointer;opacity:0;transition:opacity 500ms linear;pointer-events:none">
+        <span style="width:16px;height:1px;background:#A01C2E"></span>Trocar de caminho
+      </button>
     </div>
-  </section>
+  </main>
 </div>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{}">
-const clamp01 = (n) => (n < 0 ? 0 : n > 1 ? 1 : n);
+const RUBRO = '#A01C2E';
+const LINE = '#E3E7EE';
+const SLATE = '#8A94A6';
+const LABEL = { paciente: 'Paciente', profissional: 'Profissional', clinica: 'Clínica' };
 
 class Component extends DCLogic {
   componentDidMount() {
-    this.root = document.querySelector('[data-h1-root]');
-    if (!this.root) return;
-    this.scenes = Array.from(this.root.querySelectorAll('[data-h1-scene]'));
-    this.plays = Array.from(this.root.querySelectorAll('[data-h1-play]'));
-    this.frags = Array.from(this.root.querySelectorAll('[data-h1-frag]'));
-    this.frags.forEach((n) => { n.dataset.disp = n.style.display || 'block'; });
-    this.cols = Array.from(this.root.querySelectorAll('[data-h1-col]'));
-    this.pads = Array.from(this.root.querySelectorAll('[data-h1-pad]'));
-    this.syncNarrow = () => {
-      const narrow = window.innerWidth < 760;
-      this.frags.forEach((n) => { n.style.display = narrow ? 'none' : n.dataset.disp; });
-      this.cols.forEach((n) => { n.style.width = narrow ? '100%' : 'min(46%,560px)'; });
-      this.pads.forEach((n) => { n.style.right = narrow ? 'clamp(20px,5vw,96px)' : 'calc(min(31vw,372px) + clamp(16px,2vw,32px))'; });
-    };
-    this.syncNarrow();
-    window.addEventListener('resize', this.syncNarrow);
+    const r = document.querySelector('[data-c0-root]');
+    if (!r) return;
+    this.r = r;
+    this.rows = Array.from(r.querySelectorAll('[data-c0-path]'));
+    this.phrases = Array.from(r.querySelectorAll('[data-c0-phrase]'));
+    this.marker = r.querySelector('[data-c0-marker]');
+    this.strip = r.querySelector('[data-c0-strip]');
+    this.imgs = Array.from(r.querySelectorAll('[data-c0-img]'));
+    this.header = r.querySelector('[data-c0-header]');
+    this.headerLabel = r.querySelector('[data-c0-headerlabel]');
+    this.swap = r.querySelector('[data-c0-swap]');
+    this.nav = r.querySelector('[data-c0-nav]');
+    this.selected = null;
+
     this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.narrow = () => window.innerWidth < 620;
 
-    if (this.reduced) { this.scenes.concat(this.plays).forEach((s) => this.setVars(s, 1)); return; }
+    this.rows.forEach((row) => {
+      const key = row.dataset.c0Path;
+      row.addEventListener('mouseenter', () => this.hover(key));
+      row.addEventListener('focus', () => this.hover(key));
+      row.addEventListener('mouseleave', () => this.hover(null));
+      row.addEventListener('blur', () => this.hover(null));
+      row.addEventListener('click', (ev) => { ev.preventDefault(); this.select(key); });
+    });
 
-    this.timers = [];
-    if (this.plays.length) {
-      this.io = new IntersectionObserver((entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting && !e.target.dataset.played) {
-            e.target.dataset.played = '1';
-            this.io.unobserve(e.target);
-            this.play(e.target, 1900);
-          }
-        });
-      }, { threshold: 0.35 });
-      this.plays.forEach((s) => this.io.observe(s));
+    this.swap.addEventListener('click', () => this.reset());
+
+    let stored = null;
+    try { stored = window.localStorage.getItem('elyon.path'); } catch (e) { stored = null; }
+    if (stored && LABEL[stored]) {
+      this.instant = true;
+      this.select(stored, true);
+      this.instant = false;
+    }
+  }
+
+  paint(row, on) {
+    const fio = row.querySelector('[data-c0-fio]');
+    const dots = Array.from(row.querySelectorAll('[data-c0-dot]'));
+    const concept = row.querySelector('[data-c0-concept]');
+    const recog = row.querySelector('[data-c0-recog]');
+    fio.style.background = on ? RUBRO : LINE;
+    dots.forEach((d) => d.setAttribute('fill', on ? RUBRO : SLATE));
+    concept.style.fontWeight = on ? '600' : '300';
+    recog.style.color = on ? '#0C2454' : '#4A5B78';
+    row.style.transform = on ? 'translateX(6px)' : 'translateX(0)';
+  }
+
+  hover(key) {
+    if (this.selected) return;
+    this.rows.forEach((row) => {
+      const k = row.dataset.c0Path;
+      const on = k === key;
+      this.paint(row, on);
+      row.style.opacity = !key || on ? '1' : '.42';
+    });
+
+    this.phrases.forEach((p) => {
+      p.style.opacity = p.dataset.c0Phrase === (key || 'base') ? '1' : '0';
+    });
+
+    if (key) {
+      const row = this.rows.find((x) => x.dataset.c0Path === key);
+      const top = row.offsetTop + row.offsetHeight / 2 - 2.5;
+      this.marker.style.opacity = '1';
+      this.marker.style.transform = 'translateY(' + top + 'px)';
+    } else {
+      this.marker.style.opacity = '0';
     }
 
-    this.onScroll = () => {
-      if (this.raf) return;
-      this.raf = requestAnimationFrame(() => { this.raf = null; this.update(); });
-    };
-    window.addEventListener('scroll', this.onScroll, { passive: true });
-    window.addEventListener('resize', this.onScroll);
-    this.update();
+    if (!this.narrow()) {
+      this.strip.style.opacity = key ? '1' : '0';
+      this.imgs.forEach((im) => { im.style.opacity = im.dataset.c0Img === key ? '1' : '0'; });
+    }
   }
 
-  componentWillUnmount() {
-    window.removeEventListener('scroll', this.onScroll);
-    window.removeEventListener('resize', this.onScroll);
-    window.removeEventListener('resize', this.syncNarrow);
-    if (this.io) this.io.disconnect();
-    if (this.timers) this.timers.forEach((id) => cancelAnimationFrame(id));
-    if (this.raf) cancelAnimationFrame(this.raf);
-  }
+  select(key, silent) {
+    this.selected = key;
+    this.r.dataset.state = 'selected';
+    this.r.dataset.path = key;
+    try { window.localStorage.setItem('elyon.path', key); } catch (e) { /* noop */ }
 
-  play(scene, dur) {
-    const t0 = performance.now();
-    const step = (now) => {
-      const t = clamp01((now - t0) / dur);
-      this.setVars(scene, t);
-      if (t < 1) this.timers.push(requestAnimationFrame(step));
-    };
-    this.timers.push(requestAnimationFrame(step));
-  }
-
-  setVars(scene, p) {
-    const s = scene.style;
-    s.setProperty('--p', p.toFixed(4));
-    s.setProperty('--pe', (1 - (1 - p) * (1 - p)).toFixed(4));
-    s.setProperty('--p1', clamp01(p / 0.3).toFixed(4));
-    s.setProperty('--p2', clamp01((p - 0.26) / 0.34).toFixed(4));
-    s.setProperty('--p3', clamp01((p - 0.6) / 0.34).toFixed(4));
-  }
-
-  update() {
-    const vh = window.innerHeight;
-    this.scenes.forEach((scene) => {
-      const r = scene.getBoundingClientRect();
-      const span = r.height - vh;
-      this.setVars(scene, span > 0 ? clamp01(-r.top / span) : 1);
+    const dur = this.instant || this.reduced ? '0ms' : '';
+    this.rows.forEach((row) => {
+      const on = row.dataset.c0Path === key;
+      if (dur) row.style.transitionDuration = dur;
+      this.paint(row, on);
+      row.style.opacity = on ? '1' : '.18';
+      row.style.transform = on ? 'translateX(10px)' : 'translateX(-6px)';
+      row.style.pointerEvents = on ? 'auto' : 'none';
+      const fio = row.querySelector('[data-c0-fio]');
+      if (on) fio.style.width = 'clamp(44px,6vw,84px)';
     });
+
+    this.phrases.forEach((p) => { p.style.opacity = p.dataset.c0Phrase === key ? '1' : '0'; });
+
+    const row = this.rows.find((x) => x.dataset.c0Path === key);
+    this.marker.style.opacity = '1';
+    this.marker.style.transform = 'translateY(' + (row.offsetTop + row.offsetHeight / 2 - 2.5) + 'px)';
+
+    if (!this.narrow()) {
+      this.strip.style.opacity = '1';
+      this.imgs.forEach((im) => { im.style.opacity = im.dataset.c0Img === key ? '1' : '0'; });
+    }
+
+    this.headerLabel.textContent = LABEL[key];
+    this.header.style.opacity = '1';
+    this.header.style.transform = 'translateY(0)';
+    this.header.style.pointerEvents = 'auto';
+    this.swap.style.opacity = '1';
+    this.swap.style.pointerEvents = 'auto';
+
+    if (!silent) {
+      window.dispatchEvent(new CustomEvent('elyon:path', { detail: { path: key } }));
+    }
+  }
+
+  reset() {
+    this.selected = null;
+    this.r.dataset.state = 'intro';
+    delete this.r.dataset.path;
+    try { window.localStorage.removeItem('elyon.path'); } catch (e) { /* noop */ }
+    this.rows.forEach((row) => {
+      row.style.transitionDuration = '';
+      row.style.pointerEvents = 'auto';
+      row.querySelector('[data-c0-fio]').style.width = '';
+    });
+    this.hover(null);
+    this.header.style.opacity = '0';
+    this.header.style.transform = 'translateY(-100%)';
+    this.header.style.pointerEvents = 'none';
+    this.swap.style.opacity = '0';
+    this.swap.style.pointerEvents = 'none';
+    this.strip.style.opacity = '0';
+    window.dispatchEvent(new CustomEvent('elyon:path', { detail: { path: null } }));
   }
 
   renderVals() { return {}; }
 }
 
+</script>
+<script>
+// Clear stored path on load so triage always shows fresh
+try { window.localStorage.removeItem('elyon.path'); } catch(e) {}
+
+// Navigate to the selected path's page after animation
+window.addEventListener('elyon:path', function(e) {
+  var path = e.detail && e.detail.path;
+  if (!path) return;
+  var pages = {
+    paciente: '/landing/ELYON Cena 01 Paciente.dc.html',
+    profissional: null,
+    clinica: null
+  };
+  var dest = pages[path];
+  if (dest) {
+    setTimeout(function() { window.location.href = dest; }, 800);
+  } else {
+    setTimeout(function() { alert('Caminho "' + path + '" em breve.'); }, 600);
+  }
+});
 </script>
 </body>
 </html>
