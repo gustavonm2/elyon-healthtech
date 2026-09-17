@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>ELYON · Sistema Operacional do Cuidado em Saúde</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html{scroll-behavior:auto}
+  body{margin:0;background:#FFFFFF;color:#0C2454;font-family:'Inter Tight',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:#183C6C;text-decoration:none}
+  a:hover{color:#A01C2E}
+  ::selection{background:rgba(160,28,46,.12)}
+  @keyframes t1-travel{from{offset-distance:0%;opacity:0}12%{opacity:1}to{offset-distance:100%;opacity:1}}
+  @keyframes t1-core{0%,55%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+  @keyframes t2-draw{from{stroke-dashoffset:320px}to{stroke-dashoffset:0}}
+  @keyframes t2-knot{0%,60%{opacity:0;transform:scale(.2)}80%{opacity:1;transform:scale(1.35)}100%{opacity:1;transform:scale(1)}}
+  @keyframes t3-out{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-10px) scale(.97)}}
+  @keyframes t3-in{0%{opacity:0;transform:translateY(12px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes t3-box{0%{transform:translateY(0) rotateY(8deg)}100%{transform:translateY(-6px) rotateY(0deg)}}
+  @keyframes t6-line{from{transform:translateY(105%)}to{transform:translateY(0)}}
+  @keyframes t6-weight{0%,70%{font-weight:300;color:#4A5B78}100%{font-weight:600;color:#0C2454}}
+  @keyframes pulse-once{0%{transform:scale(1);opacity:1}45%{transform:scale(2.2);opacity:0}100%{transform:scale(1);opacity:0}}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+</style>
+</helmet>
+
+<div data-elyon-root="true" style="--p:0;--pq:0;--pe:0;--p1:0;--p2:0;--p3:0;--g:0">
+
+  <header style="position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px clamp(20px,6vw,120px);background:rgba(255,255,255,.86);backdrop-filter:blur(22px);border-bottom:1px solid rgba(227,231,238,.9)">
+    <a href="#cena00" style="display:block;position:relative;width:134px;height:26px;overflow:hidden;flex:0 0 auto" aria-label="ELYON">
+      <img src="uploads/WhatsApp Image 2026-08-15 at 12.01.04.jpeg" alt="ELYON" style="position:absolute;width:172px;height:172px;left:-19px;top:-108px" />
+    </a>
+    <nav style="display:flex;align-items:center;gap:clamp(12px,1.6vw,28px);font-size:13px;letter-spacing:.02em;color:#4A5B78;min-width:0">
+      <a data-nav-secondary="true" href="#cena00" style="white-space:nowrap">A ELYON</a>
+      <a data-nav-secondary="true" href="#cena02" style="white-space:nowrap">Para pacientes</a>
+      <a data-nav-secondary="true" href="#cena02" style="white-space:nowrap">Para profissionais</a>
+      <a data-nav-secondary="true" href="#cena02" style="white-space:nowrap">Para clínicas</a>
+      <a data-nav-secondary="true" href="#cena01" style="white-space:nowrap">Como funciona</a>
+      <a href="#cena00" style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:8px 16px;border:1px solid #0C2454;border-radius:2px;color:#0C2454;font-weight:500;min-height:38px">
+        <span style="width:5px;height:5px;background:#A01C2E;border-radius:50%"></span>Entrar
+      </a>
+    </nav>
+  </header>
+
+  <div aria-hidden="true" style="position:fixed;z-index:55;right:clamp(14px,2.4vw,34px);top:50%;transform:translateY(-50%);width:11px;height:180px;display:flex;justify-content:center">
+    <div style="position:relative;width:1px;height:100%;background:#E3E7EE">
+      <div style="position:absolute;inset:0 auto 0 0;width:1px;height:calc(var(--g) * 100%);background:#A01C2E"></div>
+      <div style="position:absolute;left:-2px;top:0;width:5px;height:5px;border-radius:50%;background:#A01C2E;opacity:calc(.25 + var(--g) * 3)"></div>
+      <div style="position:absolute;left:-2px;top:50%;width:5px;height:5px;border-radius:50%;background:#A01C2E;opacity:calc(.25 + (var(--g) - .5) * 3)"></div>
+      <div style="position:absolute;left:-2px;bottom:0;width:5px;height:5px;border-radius:50%;background:#A01C2E;opacity:calc(.25 + (var(--g) - .95) * 8)"></div>
+    </div>
+  </div>
+
+  <section data-screen-label="Folha de sistema" style="padding:120px clamp(20px,6vw,120px) 40px;background:#FFFFFF">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;border-bottom:1px solid #E3E7EE;padding-bottom:28px">
+      <div>
+        <p style="margin:0 0 14px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Rodada 01 · Folha de sistema visual</p>
+        <h1 style="margin:0;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(30px,4.4vw,58px);line-height:1.04;letter-spacing:-.02em;color:#0C2454;text-wrap:pretty">Os materiais antes<br />da <span style="font-weight:600">narrativa.</span></h1>
+      </div>
+      <p style="margin:0;max-width:34ch;font-size:17px;line-height:1.5;color:#4A5B78">Cor, tipografia, os nove detalhes rubro, o painel protagonista e as transições isoladas. O protótipo das cenas 00, 01 e 02 começa abaixo desta folha.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:1px;background:#E3E7EE;margin-top:56px;border:1px solid #E3E7EE">
+      <div style="background:#fff;padding:22px">
+        <p style="margin:0 0 18px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Base</p>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#FFFFFF;border:1px solid #E3E7EE"></span><span style="font-size:13px;color:#4A5B78">white · <span style="font-variant-numeric:tabular-nums">#FFFFFF</span></span></div>
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#F5F7FA;border:1px solid #E3E7EE"></span><span style="font-size:13px;color:#4A5B78">mist · <span style="font-variant-numeric:tabular-nums">#F5F7FA</span></span></div>
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#E3E7EE"></span><span style="font-size:13px;color:#4A5B78">line · <span style="font-variant-numeric:tabular-nums">#E3E7EE</span></span></div>
+        </div>
+      </div>
+      <div style="background:#fff;padding:22px">
+        <p style="margin:0 0 18px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Azul-noturno</p>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#0C2454"></span><span style="font-size:13px;color:#4A5B78">navy-950 · <span style="font-variant-numeric:tabular-nums">#0C2454</span></span></div>
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#183C6C"></span><span style="font-size:13px;color:#4A5B78">navy-800 · <span style="font-variant-numeric:tabular-nums">#183C6C</span></span></div>
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#4A5B78"></span><span style="font-size:13px;color:#4A5B78">navy-500 · <span style="font-variant-numeric:tabular-nums">#4A5B78</span></span></div>
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#8A94A6"></span><span style="font-size:13px;color:#4A5B78">slate-400 · <span style="font-variant-numeric:tabular-nums">#8A94A6</span></span></div>
+        </div>
+      </div>
+      <div style="background:#fff;padding:22px">
+        <p style="margin:0 0 18px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Rubro · assinatura de precisão</p>
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#A01C2E"></span><span style="font-size:13px;color:#4A5B78">rubro · <span style="font-variant-numeric:tabular-nums">#A01C2E</span></span></div>
+          <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:rgba(160,28,46,.12)"></span><span style="font-size:13px;color:#4A5B78">rubro-soft · 12%</span></div>
+        </div>
+        <p style="margin:18px 0 0;font-size:13px;line-height:1.5;color:#8A94A6">Máximo de 3–5% da área da tela. Nunca botão preenchido, bloco de fundo, texto longo ou glow.</p>
+      </div>
+      <div style="background:#fff;padding:22px">
+        <p style="margin:0 0 18px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Fora do sistema</p>
+        <div style="display:flex;align-items:center;gap:12px"><span style="width:34px;height:34px;background:#5B8ECF"></span><span style="font-size:13px;color:#4A5B78"><span style="font-variant-numeric:tabular-nums">#5B8ECF</span> existe só dentro do logo</span></div>
+        <p style="margin:18px 0 0;font-size:13px;line-height:1.5;color:#8A94A6">Sem gradiente perceptível, sem roxo, neon, ciano ou azul de IA. Brilho e 3D pertencem apenas ao logo.</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:56px;margin-top:80px;align-items:start">
+      <div>
+        <p style="margin:0 0 26px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Tipografia · Sora + Inter Tight</p>
+        <p style="margin:0 0 6px;font-family:'Sora',sans-serif;font-weight:200;font-size:clamp(38px,5vw,76px);line-height:1;letter-spacing:-.025em;color:#0C2454">Display <span style="font-weight:600">64–88</span></p>
+        <p style="margin:0 0 22px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Sora 200 · palavra-chave em 600</p>
+        <p style="margin:0 0 6px;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(26px,3.2vw,46px);line-height:1.08;letter-spacing:-.018em;color:#0C2454">H2 · o cuidado <span style="font-weight:600">continua.</span></p>
+        <p style="margin:0 0 28px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Sora 300 · 40–56</p>
+        <p style="margin:0 0 6px;font-size:18px;line-height:1.55;color:#4A5B78;max-width:42ch">Corpo em Inter Tight, 17–19px. Frases curtas, no máximo duas linhas quando ancoradas à régua rubro.</p>
+        <p style="margin:22px 0 6px;font-size:13px;letter-spacing:.02em;color:#183C6C;font-variant-numeric:tabular-nums">UI 12–14 · 08:40 · 120/80 mmHg · 50 mg</p>
+        <p style="margin:0;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Algarismos tabulares em horários e doses</p>
+      </div>
+
+      <div>
+        <p style="margin:0 0 26px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Os nove detalhes rubro</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:1px;background:#E3E7EE;border:1px solid #E3E7EE">
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <svg viewBox="0 0 120 40" style="width:100%;height:40px;overflow:visible"><path d="M2 34 C 34 34, 40 6, 72 6 S 106 30, 118 12" fill="none" stroke="#A01C2E" stroke-width="1.25" /></svg>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">O fio · 1.25px</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="display:flex;gap:12px;align-items:stretch">
+              <span style="width:1.5px;min-height:44px;background:#A01C2E;flex:0 0 auto"></span>
+              <span style="font-size:15px;line-height:1.35;color:#0C2454">Uma fala curta,<br />ancorada.</span>
+            </div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Régua · 1–1.5px</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="position:relative;width:64px;height:44px;background:#F5F7FA">
+              <span style="position:absolute;left:0;top:0;width:18px;height:1px;background:#A01C2E"></span><span style="position:absolute;left:0;top:0;width:1px;height:18px;background:#A01C2E"></span>
+              <span style="position:absolute;right:0;top:0;width:18px;height:1px;background:#A01C2E"></span><span style="position:absolute;right:0;top:0;width:1px;height:18px;background:#A01C2E"></span>
+              <span style="position:absolute;left:0;bottom:0;width:18px;height:1px;background:#A01C2E"></span><span style="position:absolute;left:0;bottom:0;width:1px;height:18px;background:#A01C2E"></span>
+              <span style="position:absolute;right:0;bottom:0;width:18px;height:1px;background:#A01C2E"></span><span style="position:absolute;right:0;bottom:0;width:1px;height:18px;background:#A01C2E"></span>
+            </div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Colchetes · 1px</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:10px;height:44px">
+              <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E"></span>
+              <span style="flex:1;height:1px;background:#E3E7EE"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E"></span>
+            </div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Nós · 4–6px</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="display:flex;align-items:center;height:44px">
+              <span style="flex:1;height:1px;background:#E3E7EE"></span>
+              <span style="width:4px;height:4px;border-radius:50%;background:#A01C2E;margin:0 -2px"></span>
+              <span style="flex:1;height:1px;background:#E3E7EE"></span>
+            </div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Hairline com nó</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="display:grid;gap:8px;height:44px;align-content:center">
+              <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#183C6C"><span style="width:6px;height:6px;border-radius:50%;background:#A01C2E"></span>Em andamento</span>
+              <span style="display:flex;align-items:center;gap:8px;font-size:12px;color:#0C2454;border-left:2px solid #A01C2E;padding-left:8px">Item selecionado</span>
+            </div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Estados de UI</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="display:flex;align-items:center;height:44px"><span style="position:relative;flex:1;height:1px;background:#E3E7EE"><span style="position:absolute;left:0;top:0;width:62%;height:1px;background:#A01C2E"></span></span></div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Progresso</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="display:grid;gap:7px;height:44px;align-content:center;font-variant-numeric:tabular-nums">
+              <span style="display:flex;align-items:center;gap:8px;font-size:12px;color:#4A5B78"><span style="width:1px;height:9px;background:#A01C2E"></span>08:40</span>
+              <span style="display:flex;align-items:center;gap:8px;font-size:12px;color:#4A5B78"><span style="width:1px;height:9px;background:#A01C2E"></span>14:15</span>
+            </div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Marcadores de tempo</p>
+          </div>
+
+          <div style="background:#fff;padding:18px 16px;min-height:112px;display:flex;flex-direction:column;justify-content:space-between">
+            <div style="height:44px;display:flex;align-items:center"><button type="button" style="font-family:inherit;font-size:12px;color:#0C2454;background:#fff;border:1px solid #E3E7EE;border-radius:2px;padding:9px 14px;outline:1.5px solid #A01C2E;outline-offset:2px;cursor:pointer;min-height:38px">Foco visível</button></div>
+            <p style="margin:0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">Foco · 1.5px</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:88px">
+      <p style="margin:0 0 8px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Painel protagonista · três estados</p>
+      <p style="margin:0 0 34px;font-size:15px;color:#8A94A6">Branco a 80% com desfoque de 24px, borda de 1px e sombra quase imperceptível. Todos os dados de pacientes são fictícios.</p>
+      <div style="position:relative;padding:44px clamp(16px,3vw,44px);background:#F5F7FA;border:1px solid #E3E7EE">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,268px),1fr));gap:clamp(18px,2.4vw,32px);perspective:1600px">
+
+          <div style="background:rgba(255,255,255,.82);backdrop-filter:blur(24px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 24px 48px rgba(12,36,84,.05);transform:rotateY(6deg) rotateX(1.5deg);transform-origin:left center">
+            <div style="padding:14px 16px;border-bottom:1px solid #E3E7EE;display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Consulta</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#183C6C"><span style="width:6px;height:6px;border-radius:50%;background:#A01C2E"></span>Em consulta</span>
+            </div>
+            <div style="padding:16px">
+              <p style="margin:0 0 12px;font-size:16px;color:#0C2454">Maria Eduarda Alves</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="aspect-ratio:3/4;background:#E3E7EE"></div>
+                <div style="aspect-ratio:3/4;background:#EDF0F5"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:#4A5B78;font-variant-numeric:tabular-nums">
+                <span style="width:1px;height:10px;background:#A01C2E"></span>08:40 · Clínica geral
+              </div>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,.82);backdrop-filter:blur(24px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 24px 48px rgba(12,36,84,.05);transform:rotateY(3deg)">
+            <div style="padding:14px 16px;border-bottom:1px solid #E3E7EE;display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Prontuário</span>
+              <span style="font-size:11px;color:#8A94A6">Registro único</span>
+            </div>
+            <div style="padding:16px;display:grid;gap:14px;font-variant-numeric:tabular-nums">
+              <div style="display:flex;gap:12px"><span style="width:1px;background:#A01C2E;flex:0 0 auto"></span><span><span style="display:block;font-size:12px;color:#8A94A6">02 mai · 08:40</span><span style="display:block;font-size:13px;color:#0C2454">Consulta registrada</span></span></div>
+              <div style="display:flex;gap:12px"><span style="width:1px;background:#E3E7EE;flex:0 0 auto"></span><span><span style="display:block;font-size:12px;color:#8A94A6">15 abr · 09:10</span><span style="display:block;font-size:13px;color:#4A5B78">Hemograma completo</span></span></div>
+              <div style="display:flex;gap:12px"><span style="width:1px;background:#E3E7EE;flex:0 0 auto"></span><span><span style="display:block;font-size:12px;color:#8A94A6">01 mar · 15:20</span><span style="display:block;font-size:13px;color:#4A5B78">Evolução clínica</span></span></div>
+              <div style="display:flex;align-items:center"><span style="flex:1;height:1px;background:#E3E7EE"></span><span style="width:4px;height:4px;border-radius:50%;background:#A01C2E;margin:0 -2px"></span><span style="flex:1;height:1px;background:#E3E7EE"></span></div>
+            </div>
+          </div>
+
+          <div style="background:rgba(255,255,255,.82);backdrop-filter:blur(24px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 24px 48px rgba(12,36,84,.05);transform:rotateY(-6deg) rotateX(1.5deg);transform-origin:right center">
+            <div style="padding:14px 16px;border-bottom:1px solid #E3E7EE;display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <span style="font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Prescrição</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#183C6C"><span style="width:6px;height:6px;border-radius:50%;background:#A01C2E"></span>Ativa</span>
+            </div>
+            <div style="padding:16px;display:grid;gap:10px;font-variant-numeric:tabular-nums">
+              <div style="border-left:2px solid #A01C2E;padding:2px 0 2px 10px"><span style="display:block;font-size:14px;color:#0C2454">Losartana 50 mg</span><span style="display:block;font-size:12px;color:#4A5B78">1 comprimido · 08:00</span></div>
+              <div style="border-left:2px solid #E3E7EE;padding:2px 0 2px 10px"><span style="display:block;font-size:14px;color:#183C6C">Coleta domiciliar</span><span style="display:block;font-size:12px;color:#4A5B78">Enfermagem · 14:15</span></div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px;color:#4A5B78">
+                <span style="width:13px;height:13px;border:1px solid #A01C2E;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto"><svg viewBox="0 0 10 10" style="width:8px;height:8px"><path d="M1 5.4 L3.6 8 L9 1.6" fill="none" stroke="#A01C2E" stroke-width="1.4" /></svg></span>
+                Consentimento registrado
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:88px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,3vw,44px);align-items:start">
+      <div>
+        <p style="margin:0 0 8px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Cartão-foto em perspectiva</p>
+        <p style="margin:0 0 30px;font-size:15px;color:#8A94A6">O paciente enquadrado pelos colchetes. A foto é um plano, não um card decorado.</p>
+        <div style="perspective:1600px">
+          <div style="position:relative;transform:rotateY(-8deg) rotateX(2deg);transform-origin:right center;box-shadow:0 1px 2px rgba(12,36,84,.06),0 28px 56px rgba(12,36,84,.06)">
+            <img src="uploads/CENA B2.png" alt="Paciente em consulta por vídeo, sentado em ambiente claro" style="display:block;width:100%;height:auto" />
+            <span style="position:absolute;left:-7px;top:-7px;width:22px;height:1px;background:#A01C2E"></span><span style="position:absolute;left:-7px;top:-7px;width:1px;height:22px;background:#A01C2E"></span>
+            <span style="position:absolute;right:-7px;top:-7px;width:22px;height:1px;background:#A01C2E"></span><span style="position:absolute;right:-7px;top:-7px;width:1px;height:22px;background:#A01C2E"></span>
+            <span style="position:absolute;left:-7px;bottom:-7px;width:22px;height:1px;background:#A01C2E"></span><span style="position:absolute;left:-7px;bottom:-7px;width:1px;height:22px;background:#A01C2E"></span>
+            <span style="position:absolute;right:-7px;bottom:-7px;width:22px;height:1px;background:#A01C2E"></span><span style="position:absolute;right:-7px;bottom:-7px;width:1px;height:22px;background:#A01C2E"></span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p style="margin:0 0 8px;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Transições isoladas</p>
+        <p style="margin:0 0 30px;font-size:15px;color:#8A94A6">Cada cena usa uma transição principal. Elas nunca se acumulam.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:1px;background:#E3E7EE;border:1px solid #E3E7EE">
+
+          <div data-demo="t1" style="background:#fff;padding:18px">
+            <div style="position:relative;height:130px;background:#F5F7FA;overflow:hidden">
+              <span data-anim="true" style="position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:#A01C2E;animation:t1-core 1.6s cubic-bezier(.65,0,.35,1) both;animation-play-state:paused"></span>
+              <span data-anim="true" style="position:absolute;left:0;top:0;width:5px;height:5px;background:#183C6C;border-radius:50%;offset-path:path('M 18 18 C 60 30, 70 50, 96 63');offset-rotate:0deg;animation:t1-travel 1.5s cubic-bezier(.65,0,.35,1) both;animation-play-state:paused"></span>
+              <span data-anim="true" style="position:absolute;left:0;top:0;width:5px;height:5px;background:#183C6C;border-radius:50%;offset-path:path('M 174 22 C 130 36, 120 52, 96 63');offset-rotate:0deg;animation:t1-travel 1.5s cubic-bezier(.65,0,.35,1) .08s both;animation-play-state:paused"></span>
+              <span data-anim="true" style="position:absolute;left:0;top:0;width:5px;height:5px;background:#4A5B78;border-radius:50%;offset-path:path('M 20 112 C 56 96, 70 78, 96 63');offset-rotate:0deg;animation:t1-travel 1.5s cubic-bezier(.65,0,.35,1) .16s both;animation-play-state:paused"></span>
+              <span data-anim="true" style="position:absolute;left:0;top:0;width:5px;height:5px;background:#4A5B78;border-radius:50%;offset-path:path('M 176 108 C 136 92, 118 76, 96 63');offset-rotate:0deg;animation:t1-travel 1.5s cubic-bezier(.65,0,.35,1) .24s both;animation-play-state:paused"></span>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px">
+              <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">T1 · Convergência</p>
+              <button type="button" onClick="{{ replay }}" style="font-family:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#183C6C;background:none;border:0;border-bottom:1px solid #A01C2E;padding:6px 0;cursor:pointer">Repetir</button>
+            </div>
+          </div>
+
+          <div data-demo="t2" style="background:#fff;padding:18px">
+            <div style="position:relative;height:130px;background:#F5F7FA;overflow:hidden">
+              <svg viewBox="0 0 200 130" style="position:absolute;inset:0;width:100%;height:100%">
+                <path data-anim="true" d="M 10 110 C 60 110, 62 24, 112 24 S 170 88, 192 44" fill="none" stroke="#A01C2E" stroke-width="1.25" stroke-dasharray="320" style="animation:t2-draw 1.6s cubic-bezier(.22,1,.36,1) both;animation-play-state:paused" />
+                <circle data-anim="true" cx="112" cy="24" r="3" fill="#A01C2E" style="transform-box:fill-box;transform-origin:center;animation:t2-knot 1.6s cubic-bezier(.22,1,.36,1) both;animation-play-state:paused" />
+              </svg>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px">
+              <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">T2 · Desenho do fio</p>
+              <button type="button" onClick="{{ replay }}" style="font-family:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#183C6C;background:none;border:0;border-bottom:1px solid #A01C2E;padding:6px 0;cursor:pointer">Repetir</button>
+            </div>
+          </div>
+
+          <div data-demo="t3" style="background:#fff;padding:18px">
+            <div style="position:relative;height:130px;background:#F5F7FA;overflow:hidden;perspective:1200px">
+              <div data-anim="true" style="position:absolute;left:18px;right:18px;top:20px;bottom:20px;background:rgba(255,255,255,.86);border:1px solid #E3E7EE;box-shadow:0 12px 28px rgba(12,36,84,.06);animation:t3-box 1.7s cubic-bezier(.65,0,.35,1) both;animation-play-state:paused">
+                <div data-anim="true" style="position:absolute;inset:0;padding:12px;animation:t3-out 1.7s cubic-bezier(.65,0,.35,1) both;animation-play-state:paused">
+                  <p style="margin:0 0 8px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#8A94A6">Consulta</p>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><span style="height:44px;background:#E3E7EE"></span><span style="height:44px;background:#EDF0F5"></span></div>
+                </div>
+                <div data-anim="true" style="position:absolute;inset:0;padding:12px;animation:t3-in 1.7s cubic-bezier(.65,0,.35,1) both;animation-play-state:paused">
+                  <p style="margin:0 0 8px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#8A94A6">Registro</p>
+                  <div style="display:grid;gap:7px;font-variant-numeric:tabular-nums">
+                    <span style="display:flex;gap:8px;align-items:center;font-size:11px;color:#0C2454"><span style="width:1px;height:10px;background:#A01C2E"></span>08:40 · consulta</span>
+                    <span style="display:flex;gap:8px;align-items:center;font-size:11px;color:#4A5B78"><span style="width:1px;height:10px;background:#E3E7EE"></span>09:10 · exame</span>
+                    <span style="display:flex;gap:8px;align-items:center;font-size:11px;color:#4A5B78"><span style="width:1px;height:10px;background:#E3E7EE"></span>15:20 · evolução</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px">
+              <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">T3 · Morph do painel</p>
+              <button type="button" onClick="{{ replay }}" style="font-family:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#183C6C;background:none;border:0;border-bottom:1px solid #A01C2E;padding:6px 0;cursor:pointer">Repetir</button>
+            </div>
+          </div>
+
+          <div data-demo="t6" style="background:#fff;padding:18px">
+            <div style="position:relative;height:130px;background:#F5F7FA;overflow:hidden;display:flex;align-items:center;padding:0 16px">
+              <div style="display:flex;gap:12px;align-items:stretch;width:100%">
+                <span style="width:1.5px;background:#A01C2E;flex:0 0 auto"></span>
+                <div style="font-family:'Sora',sans-serif;font-weight:300;font-size:17px;line-height:1.24;color:#0C2454">
+                  <span style="display:block;overflow:hidden"><span data-anim="true" style="display:block;animation:t6-line .9s cubic-bezier(.22,1,.36,1) both;animation-play-state:paused">O cuidado não termina</span></span>
+                  <span style="display:block;overflow:hidden"><span data-anim="true" style="display:block;animation:t6-line .9s cubic-bezier(.22,1,.36,1) .07s both;animation-play-state:paused">quando a consulta</span></span>
+                  <span style="display:block;overflow:hidden"><span data-anim="true" style="display:block;animation:t6-line .9s cubic-bezier(.22,1,.36,1) .14s both;animation-play-state:paused"><span data-anim="true" style="animation:t6-weight 1.6s linear both;animation-play-state:paused">termina.</span></span></span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:14px">
+              <p style="margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8A94A6">T6 · Texto por linha</p>
+              <button type="button" onClick="{{ replay }}" style="font-family:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#183C6C;background:none;border:0;border-bottom:1px solid #A01C2E;padding:6px 0;cursor:pointer">Repetir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:18px;margin-top:96px">
+      <span style="flex:1;height:1px;background:#E3E7EE"></span>
+      <span style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Protótipo · cenas 00 · 01 · 02</span>
+      <span style="flex:1;height:1px;background:#E3E7EE"></span>
+    </div>
+  </section>
+
+  <section id="cena00" data-scene="00" data-screen-label="Cena 00 · Abertura" style="--p:0;--pq:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:200vh">
+    <div style="position:sticky;top:0;height:100vh;overflow:hidden;background:#FFFFFF;display:flex;align-items:center">
+      <div style="position:absolute;inset:0;pointer-events:none">
+        <div style="position:absolute;left:clamp(20px,6vw,120px);top:50%;width:1.25px;height:56vh;background:#A01C2E;transform-origin:top center;transform:translateX(calc((1 - var(--p2)) * (50vw - clamp(20px,6vw,120px)))) scaleY(var(--pe));opacity:calc(var(--p1) * 1.2)"></div>
+      </div>
+
+      <div style="position:relative;width:100%;padding:0 clamp(20px,6vw,120px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,64px);align-items:center">
+        <div>
+          <img src="uploads/WhatsApp Image 2026-08-15 at 12.01.04.jpeg" alt="Logo ELYON · Conecta. Coordena. Eleva." style="display:block;width:min(100%,340px);height:auto;transform:scale(calc(1.05 - var(--pe) * .05));opacity:clamp(0,calc(.25 + var(--p) * 5),1)" />
+          <div style="display:flex;gap:14px;align-items:stretch;margin-top:clamp(18px,3vh,36px);opacity:clamp(0,calc((var(--p) - .08) * 6),1);transform:translateY(calc((1 - var(--pe)) * 14px))">
+            <span style="width:1.5px;background:#A01C2E;flex:0 0 auto"></span>
+            <h2 style="margin:0;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(28px,4.2vw,64px);line-height:1.06;letter-spacing:-.022em;color:#0C2454;max-width:16ch;text-wrap:pretty">O cuidado não termina quando a <span style="font-weight:600">consulta termina.</span></h2>
+          </div>
+          <p style="margin:clamp(16px,2.6vh,30px) 0 0;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6;opacity:clamp(0,calc((var(--p) - .2) * 6),1)">Conecta. Coordena. Eleva.</p>
+          <p style="margin:clamp(24px,4vh,48px) 0 0;display:inline-flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8A94A6;opacity:clamp(0,calc(1 - var(--p) * 3),1)">
+            <span style="width:5px;height:5px;border-radius:50%;background:#A01C2E"></span>Role para acompanhar
+          </p>
+        </div>
+        <div style="position:relative;justify-self:end;width:100%;max-width:min(100%,560px)">
+          <img src="uploads/Gemini_Generated_Image_9i56m39i56m39i56.jpeg" alt="Liz, Coordenadora do Cuidado, em uma clínica clara" style="display:block;width:100%;height:auto;opacity:clamp(0,calc((var(--p) - .12) * 4),1);filter:blur(calc((1 - var(--pe)) * 10px));transform:translateY(calc((1 - var(--pe)) * 18px))" />
+          <div style="position:absolute;inset:0;background:linear-gradient(90deg,#FFFFFF 0%,rgba(255,255,255,0) 42%)"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cena01" data-scene="01" data-screen-label="Cena 01 · Fragmentação e Liz" style="--p:0;--pq:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:300vh">
+    <div style="position:sticky;top:0;height:100vh;overflow:hidden;background:#FFFFFF">
+      <div style="position:absolute;left:clamp(20px,6vw,120px);top:0;width:1.25px;height:100%;background:#A01C2E;transform-origin:top center;transform:scaleY(calc(.25 + var(--pe) * .75))"></div>
+      <div style="position:absolute;left:calc(clamp(20px,6vw,120px) - 2px);top:34%;width:5px;height:5px;border-radius:50%;background:#A01C2E;opacity:calc(var(--p2) * 1.4)"></div>
+
+      <div style="position:absolute;right:0;top:0;width:min(58%,760px);height:100%;overflow:hidden">
+        <img src="uploads/Gemini_Generated_Image_9i56m39i56m39i56.jpeg" alt="Liz, Coordenadora do Cuidado, à frente de uma recepção com profissionais trabalhando" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:72% 40%;filter:blur(calc(var(--p3) * 9px)) saturate(calc(1 - var(--p3) * .18));transform:scale(calc(1.04 - var(--pe) * .04))" />
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,#FFFFFF 0%,rgba(255,255,255,.72) 26%,rgba(255,255,255,0) 62%)"></div>
+        <div style="position:absolute;left:clamp(16px,3vw,40px);bottom:clamp(20px,5vh,56px);display:flex;gap:12px;align-items:center;opacity:clamp(0,calc((var(--p) - .06) * 5),1)">
+          <span style="width:1.5px;height:34px;background:#A01C2E"></span>
+          <span style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#183C6C">Liz · Coordenadora do Cuidado</span>
+        </div>
+      </div>
+
+      <div style="position:absolute;inset:0;pointer-events:none">
+        <div style="position:absolute;left:6%;top:8%;width:min(46vw,250px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .12) * 5),1);filter:blur(calc((1 - var(--p2)) * 5px));transform:translate3d(calc((1 - var(--pe)) * -26px), calc((1 - var(--pe)) * 18px), 0)">
+          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Hemograma completo</p>
+          <p style="margin:0;font-size:14px;color:#0C2454;font-variant-numeric:tabular-nums">12 abr · Hb 11,2 g/dL</p>
+        </div>
+
+        <div data-frag-optional="true" style="position:absolute;left:36%;top:13%;width:min(44vw,236px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .2) * 5),1);filter:blur(calc((1 - var(--p2)) * 6px));transform:translate3d(calc((1 - var(--pe)) * 22px), calc((1 - var(--pe)) * -14px), 0)">
+          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Receita</p>
+          <p style="margin:0;font-size:14px;color:#0C2454;font-variant-numeric:tabular-nums">Losartana 50 mg · 1x ao dia</p>
+        </div>
+
+        <div style="position:absolute;left:6%;top:81%;width:min(42vw,224px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .28) * 5),1);filter:blur(calc((1 - var(--p2)) * 7px));transform:translate3d(calc((1 - var(--pe)) * -18px), calc((1 - var(--pe)) * 24px), 0)">
+          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Consulta agendada</p>
+          <p style="margin:0;font-size:14px;color:#0C2454;font-variant-numeric:tabular-nums">Cardiologia · 18 mai, 14:30</p>
+        </div>
+
+        <div data-frag-optional="true" style="position:absolute;left:64%;top:23%;width:min(40vw,222px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .36) * 5),1);filter:blur(calc((1 - var(--p2)) * 8px));transform:translate3d(calc((1 - var(--pe)) * 16px), calc((1 - var(--pe)) * 26px), 0)">
+          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Mensagem</p>
+          <p style="margin:0;font-size:14px;color:#4A5B78">“Doutor, posso tomar os dois juntos?”</p>
+        </div>
+
+        <div data-frag-optional="true" style="position:absolute;left:31%;top:74%;width:min(40vw,230px);padding:13px 15px;background:rgba(255,255,255,.84);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 20px 40px rgba(12,36,84,.05);opacity:clamp(0,calc((var(--p) - .44) * 5),1);filter:blur(calc((1 - var(--p2)) * 9px));transform:translate3d(calc((1 - var(--pe)) * -14px), calc((1 - var(--pe)) * -22px), 0)">
+          <p style="margin:0 0 5px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Pedido de exame</p>
+          <p style="margin:0;font-size:14px;color:#4A5B78">Glicemia de jejum · não realizado</p>
+        </div>
+      </div>
+
+      <div style="position:relative;height:100%;display:flex;align-items:center;padding:0 clamp(20px,6vw,120px)">
+        <div style="position:relative;max-width:min(100%,620px);padding-left:clamp(14px,2vw,26px)">
+          <div style="display:flex;gap:14px;align-items:stretch">
+            <span style="width:1.5px;background:#A01C2E;flex:0 0 auto;opacity:calc(var(--p1) * 1.4)"></span>
+            <h2 style="margin:0;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(26px,3.9vw,58px);line-height:1.07;letter-spacing:-.022em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc(var(--p1) * 1.6),1);transform:translateY(calc((1 - var(--p1)) * 22px))">Sua história de saúde não deveria começar de novo <span style="font-weight:600">a cada consulta.</span></h2>
+          </div>
+          <p style="margin:clamp(18px,3vh,34px) 0 0;max-width:40ch;font-size:clamp(15px,1.15vw,18px);line-height:1.55;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .42) * 4),1)">Exame aqui, receita ali, uma pergunta sem resposta no meio. Hoje, quem carrega a informação entre um profissional e outro é você.</p>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:clamp(20px,4vh,44px);opacity:clamp(0,calc((var(--p) - .72) * 5),1)">
+            <span style="width:22px;height:1px;background:#A01C2E"></span>
+            <span style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8A94A6">Então o que organiza tudo isso?</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cena02" data-scene="02" data-screen-label="Cena 02 · O paciente no centro" style="--p:0;--pq:0;--pe:0;--p1:0;--p2:0;--p3:0;position:relative;height:300vh">
+    <div style="position:sticky;top:0;height:100vh;overflow:hidden;background:#FFFFFF">
+      <div style="position:absolute;left:clamp(20px,6vw,120px);top:0;width:1.25px;height:100%;background:#A01C2E"></div>
+      <div style="position:absolute;left:calc(clamp(20px,6vw,120px) - 2px);top:50%;width:5px;height:5px;border-radius:50%;background:#A01C2E;opacity:calc(var(--p1) * 1.6)">
+        <span style="position:absolute;inset:-2px;border:1px solid #A01C2E;border-radius:50%;animation:pulse-once 1.4s cubic-bezier(.22,1,.36,1) both;animation-play-state:paused" data-anim="true"></span>
+      </div>
+      <div data-demo="knot" style="position:absolute;left:clamp(20px,6vw,120px);top:50%;height:1.25px;width:calc(var(--pe) * 16vw);background:#A01C2E;opacity:calc(var(--p1) * 1.4)"></div>
+
+      <div style="position:relative;height:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,72px);align-items:center;padding:clamp(80px,12vh,120px) clamp(20px,6vw,120px) clamp(40px,8vh,80px);padding-left:calc(clamp(20px,6vw,120px) + clamp(18px,2.6vw,34px))">
+        <div>
+          <div style="display:flex;gap:14px;align-items:stretch">
+            <span style="width:1.5px;background:#A01C2E;flex:0 0 auto;opacity:calc(var(--p1) * 1.4)"></span>
+            <h2 style="margin:0;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(28px,4.2vw,64px);line-height:1.06;letter-spacing:-.022em;color:#0C2454;text-wrap:pretty;opacity:clamp(0,calc(var(--p1) * 1.8),1);transform:translateY(calc((1 - var(--p1)) * 20px))">No centro, <span style="font-weight:600">uma pessoa.</span></h2>
+          </div>
+          <p style="margin:clamp(18px,3vh,34px) 0 0;max-width:38ch;font-size:clamp(15px,1.15vw,18px);line-height:1.55;color:#4A5B78;opacity:clamp(0,calc((var(--p) - .3) * 4),1)">A ELYON coordena o cuidado ao redor dela. As informações deixam de ser pedaços soltos e passam a ter um único lugar, com uma ordem e um próximo passo.</p>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:clamp(20px,4vh,44px);opacity:clamp(0,calc((var(--p) - .74) * 5),1)">
+            <span style="width:22px;height:1px;background:#A01C2E"></span>
+            <span style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8A94A6">E como esse cuidado começa?</span>
+          </div>
+        </div>
+
+        <div style="position:relative;justify-self:center;width:100%;max-width:min(100%,520px);perspective:1600px">
+          <div style="position:relative;transform:rotateY(calc((1 - var(--pe)) * 9deg)) rotateX(calc((1 - var(--pe)) * 2deg)) scale(calc(.94 + var(--pe) * .06));transform-origin:center;box-shadow:0 1px 2px rgba(12,36,84,.06),0 28px 56px rgba(12,36,84,.06)">
+            <div style="position:relative;aspect-ratio:1376/768;overflow:hidden;background:#F5F7FA">
+              <img src="uploads/CENA B2.png" alt="Paciente olhando para a câmera em um ambiente claro" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:clamp(0,calc(1 - (var(--p) - .5) * 4),1)" />
+              <img src="uploads/CENA B1.png" alt="O mesmo paciente em casa, acompanhando seu cuidado pelo celular" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:clamp(0,calc((var(--p) - .5) * 4),1)" />
+            </div>
+            <span style="position:absolute;left:-7px;top:-7px;width:22px;height:1px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span><span style="position:absolute;left:-7px;top:-7px;width:1px;height:22px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span>
+            <span style="position:absolute;right:-7px;top:-7px;width:22px;height:1px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span><span style="position:absolute;right:-7px;top:-7px;width:1px;height:22px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span>
+            <span style="position:absolute;left:-7px;bottom:-7px;width:22px;height:1px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span><span style="position:absolute;left:-7px;bottom:-7px;width:1px;height:22px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span>
+            <span style="position:absolute;right:-7px;bottom:-7px;width:22px;height:1px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span><span style="position:absolute;right:-7px;bottom:-7px;width:1px;height:22px;background:#A01C2E;opacity:calc(var(--p2) * 1.5)"></span>
+          </div>
+
+          <div style="position:absolute;left:-6%;top:-6%;width:min(52%,214px);padding:11px 13px;background:rgba(255,255,255,.86);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 18px 36px rgba(12,36,84,.06);transform:translate3d(calc((1 - var(--pe)) * -22vw), calc((1 - var(--pq)) * -14vh), 0);opacity:clamp(0,calc(var(--p1) * 1.6),1)">
+            <p style="margin:0 0 4px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Hemograma</p>
+            <p style="margin:0;font-size:13px;color:#0C2454;font-variant-numeric:tabular-nums">12 abr · Hb 11,2</p>
+          </div>
+
+          <div style="position:absolute;right:-6%;top:12%;width:min(50%,206px);padding:11px 13px;background:rgba(255,255,255,.86);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 18px 36px rgba(12,36,84,.06);transform:translate3d(calc((1 - var(--pe)) * 22vw), calc((1 - var(--pq)) * -10vh), 0);opacity:clamp(0,calc((var(--p) - .1) * 5),1)">
+            <p style="margin:0 0 4px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Receita</p>
+            <p style="margin:0;font-size:13px;color:#0C2454;font-variant-numeric:tabular-nums">Losartana 50 mg</p>
+          </div>
+
+          <div style="position:absolute;left:-4%;bottom:6%;width:min(52%,214px);padding:11px 13px;background:rgba(255,255,255,.86);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 18px 36px rgba(12,36,84,.06);transform:translate3d(calc((1 - var(--pe)) * -18vw), calc((1 - var(--pq)) * 16vh), 0);opacity:clamp(0,calc((var(--p) - .18) * 5),1)">
+            <p style="margin:0 0 4px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Cardiologia</p>
+            <p style="margin:0;font-size:13px;color:#0C2454;font-variant-numeric:tabular-nums">18 mai · 14:30</p>
+          </div>
+
+          <div style="position:absolute;right:-5%;bottom:-4%;width:min(54%,222px);padding:11px 13px;background:rgba(255,255,255,.86);backdrop-filter:blur(20px);border:1px solid #E3E7EE;box-shadow:0 1px 2px rgba(12,36,84,.05),0 18px 36px rgba(12,36,84,.06);transform:translate3d(calc((1 - var(--pe)) * 20vw), calc((1 - var(--pq)) * 14vh), 0);opacity:clamp(0,calc((var(--p) - .26) * 5),1)">
+            <p style="margin:0 0 4px;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8A94A6">Pendente</p>
+            <p style="margin:0;font-size:13px;color:#4A5B78">Glicemia de jejum</p>
+          </div>
+
+          <p style="margin:18px 0 0;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#8A94A6;text-align:center;opacity:clamp(0,calc((var(--p) - .5) * 4),1)">Dados fictícios · paciente ilustrativo</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(60px,10vh,120px) clamp(20px,6vw,120px) clamp(80px,12vh,140px);background:#FFFFFF;border-top:1px solid #E3E7EE">
+    <div style="display:flex;align-items:center;gap:18px;margin-bottom:34px">
+      <span style="width:22px;height:1px;background:#A01C2E"></span>
+      <span style="font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#8A94A6">Fim da rodada 01</span>
+      <span style="flex:1;height:1px;background:#E3E7EE"></span>
+    </div>
+    <p style="margin:0;max-width:52ch;font-family:'Sora',sans-serif;font-weight:300;font-size:clamp(20px,2.2vw,30px);line-height:1.25;letter-spacing:-.015em;color:#0C2454;text-wrap:pretty">As cenas 03 a 12 entram uma a uma, cada uma respondendo a pergunta que a anterior <span style="font-weight:600">deixou aberta.</span></p>
+    <p style="margin:26px 0 0;max-width:46ch;font-size:15px;line-height:1.55;color:#8A94A6">A próxima pergunta em aberto é a da cena 02: e como esse cuidado começa? Ela é respondida pela cena 03, a telemedicina como porta de entrada.</p>
+  </section>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{}">
+const clamp01 = (n) => n < 0 ? 0 : n > 1 ? 1 : n;
+
+class Component extends DCLogic {
+  componentDidMount() {
+    this.root = document.querySelector('[data-elyon-root]');
+    if (!this.root) return;
+    this.scenes = Array.from(this.root.querySelectorAll('[data-scene]'));
+    this.reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    this.navItems = Array.from(this.root.querySelectorAll('[data-nav-secondary]'));
+    this.optionalFrags = Array.from(this.root.querySelectorAll('[data-frag-optional]'));
+    this.syncNav = () => {
+      const compact = window.innerWidth < 860;
+      this.navItems.forEach((n) => { n.style.display = compact ? 'none' : 'inline'; });
+      this.optionalFrags.forEach((n) => { n.style.display = compact ? 'none' : 'block'; });
+    };
+    this.syncNav();
+    window.addEventListener('resize', this.syncNav);
+
+    Array.from(this.root.querySelectorAll('[data-anim]')).forEach((n) => {
+      n.dataset.animName = getComputedStyle(n).animationName;
+    });
+
+    if (this.reduced) {
+      this.scenes.forEach((s) => this.setVars(s, 1));
+      this.root.style.setProperty('--g', '1');
+      Array.from(this.root.querySelectorAll('[data-demo]')).forEach((d) => this.play(d));
+      return;
+    }
+
+    this.onScroll = () => {
+      if (this.raf) return;
+      this.raf = requestAnimationFrame(() => { this.raf = null; this.update(); });
+    };
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+    window.addEventListener('resize', this.onScroll);
+    this.update();
+
+    this.io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        this.play(e.target);
+        this.io.unobserve(e.target);
+      });
+    }, { threshold: 0.45 });
+    Array.from(this.root.querySelectorAll('[data-demo]')).forEach((d) => this.io.observe(d));
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('scroll', this.onScroll);
+    window.removeEventListener('resize', this.onScroll);
+    window.removeEventListener('resize', this.syncNav);
+    if (this.io) this.io.disconnect();
+    if (this.raf) cancelAnimationFrame(this.raf);
+  }
+
+  setVars(el, p) {
+    const e = 1 - (1 - p) * (1 - p);
+    el.style.setProperty('--p', p.toFixed(4));
+    el.style.setProperty('--pq', (p * p).toFixed(4));
+    el.style.setProperty('--pe', e.toFixed(4));
+    el.style.setProperty('--p1', clamp01(p / 0.34).toFixed(4));
+    el.style.setProperty('--p2', clamp01((p - 0.33) / 0.34).toFixed(4));
+    el.style.setProperty('--p3', clamp01((p - 0.66) / 0.34).toFixed(4));
+  }
+
+  update() {
+    const vh = window.innerHeight;
+    this.scenes.forEach((s) => {
+      const r = s.getBoundingClientRect();
+      const span = r.height - vh;
+      const p = span > 0 ? clamp01(-r.top / span) : clamp01(1 - r.bottom / (vh + r.height));
+      this.setVars(s, p);
+    });
+    const max = document.documentElement.scrollHeight - vh;
+    this.root.style.setProperty('--g', max > 0 ? clamp01(window.scrollY / max).toFixed(4) : '0');
+  }
+
+  play(host) {
+    Array.from(host.querySelectorAll('[data-anim]')).forEach((n) => {
+      const name = n.dataset.animName;
+      n.style.animationPlayState = 'paused';
+      n.style.animationName = 'none';
+      void n.offsetWidth;
+      if (name && name !== 'none') n.style.animationName = name;
+      n.style.animationPlayState = 'running';
+    });
+  }
+
+  renderVals() {
+    return {
+      replay: (ev) => {
+        const host = ev.currentTarget.closest('[data-demo]');
+        if (host) this.play(host);
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>
